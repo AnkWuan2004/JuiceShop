@@ -40,13 +40,18 @@ def mrr_score(got: list[str], expected: set[str]) -> float:
     return 0.0
 
 
-def eval_one(use_hybrid: bool, k: int = 3) -> dict:
+def eval_one(*, mode: str, k: int = 3) -> dict:
     hits = 0
     p_sum = 0.0
     mrr_sum = 0.0
     details = []
     for q, expected in GOLD:
-        results = hybrid_search(q, top_k=k) if use_hybrid else search(q, k=k)
+        if mode == "vector_or_bow":
+            results = search(q, k=k)
+        elif mode == "hybrid":
+            results = hybrid_search(q, top_k=k, use_graph=False)
+        else:
+            results = hybrid_search(q, top_k=k, use_graph=True)
         ids = [r["id"] for r in results]
         id_set = set(ids)
         ok = bool(id_set & expected)
@@ -67,7 +72,7 @@ def eval_one(use_hybrid: bool, k: int = 3) -> dict:
         )
     n = len(GOLD)
     return {
-        "mode": "hybrid" if use_hybrid else "vector_or_bow",
+        "mode": mode,
         "correct": hits,
         "total": n,
         "accuracy": hits / n,
@@ -82,15 +87,22 @@ def main() -> None:
         from ingest import main as ingest_main
 
         ingest_main()
+    else:
+        from graphrag import build_graph, GRAPH_PATH
 
-    bow = eval_one(False)
-    hyb = eval_one(True)
-    report = {"bow_or_chroma": bow, "hybrid": hyb}
+        if not GRAPH_PATH.exists():
+            build_graph()
+
+    bow = eval_one(mode="vector_or_bow")
+    hyb = eval_one(mode="hybrid")
+    graph = eval_one(mode="hybrid_graphrag")
+    report = {"bow_or_chroma": bow, "hybrid": hyb, "hybrid_graphrag": graph}
     out = ROOT / "store" / "retrieval_eval.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"BOW/Chroma: {bow['correct']}/{bow['total']} = {bow['accuracy']:.0%}  P@3={bow['precision_at_3']:.2f} MRR={bow['mrr']:.2f}")
-    print(f"Hybrid:     {hyb['correct']}/{hyb['total']} = {hyb['accuracy']:.0%}  P@3={hyb['precision_at_3']:.2f} MRR={hyb['mrr']:.2f}")
+    print(f"BOW/Chroma:      {bow['correct']}/{bow['total']} = {bow['accuracy']:.0%}  P@3={bow['precision_at_3']:.2f} MRR={bow['mrr']:.2f}")
+    print(f"Hybrid:          {hyb['correct']}/{hyb['total']} = {hyb['accuracy']:.0%}  P@3={hyb['precision_at_3']:.2f} MRR={hyb['mrr']:.2f}")
+    print(f"Hybrid+GraphRAG: {graph['correct']}/{graph['total']} = {graph['accuracy']:.0%}  P@3={graph['precision_at_3']:.2f} MRR={graph['mrr']:.2f}")
     print(f"[+] Wrote {out}")
 
 

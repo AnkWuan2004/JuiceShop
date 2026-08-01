@@ -12,7 +12,15 @@ docker compose ps
 # http://localhost:8000  Kong
 ```
 
-## 2. Seed + RAG
+Optional vLLM gateway stub (Tuần 11):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.vllm.yml --profile vllm up -d
+# hoặc: python scripts/vllm_gateway.py
+# http://localhost:8090/health
+```
+
+## 2. Seed + RAG (+ GraphRAG)
 
 ```bash
 pip install -r requirements.txt
@@ -21,29 +29,41 @@ python rag/ingest.py
 python rag/evaluate_retrieval.py
 ```
 
-Kỳ vọng: hybrid accuracy ≥ 80%, có P@3 / MRR trong `rag/store/retrieval_eval.json`.
+Kỳ vọng: hybrid / hybrid_graphrag accuracy cao; P@3 / MRR trong `rag/store/retrieval_eval.json` (có key `hybrid_graphrag`).
 
-## 3. Syndicate E2E
+## 3. MCP + Syndicate E2E
 
 ```bash
+# terminal A
+python agents/mcp_server.py
+
+# terminal B
+python agents/mcp_client.py
 python agents/run_syndicate.py
 ```
 
-Artifacts: `attack_surface_map.json`, `fuzz_findings.json` (có `mutations`), `exploit_result.json`, `syndicate_summary.json`, `injection_before.json` / `injection_after.json`.
+Artifacts: `attack_surface_map.json`, `fuzz_findings.json`, `exploit_result.json`, `syndicate_summary.json` (A2A), `a2a_messages.jsonl`, `injection_before.json` / `after.json`, `traces/langsmith_spans.jsonl`.
 
-## 4. HITL reject (Tuần 8)
+## 4. HITL reject + Slack UI (Tuần 8)
 
 ```bash
 python agents/exploit_agent.py --reject-demo
-# hoặc: python agents/hitl_cli.py --reject-demo
+
+# Slack-compatible local:
+python scripts/slack_hitl_server.py
+# browser http://127.0.0.1:8787
+$env:SENTINEL_HITL="slack"
+python agents/hitl_cli.py --slack-demo
 ```
 
-## 5. PII + Eval + FinOps + Kong
+## 5. PII + Eval + FinOps + Kong + Observability
 
 ```bash
 python agents/pii_redaction.py --demo
 python agents/eval_pipeline.py --both
 python scripts/finops_report.py
+python scripts/monitor_agents.py
+python scripts/arize_viewer.py
 python scripts/test_kong_iam.py
 python scripts/test_kong_rate_limit.py
 ```
@@ -51,8 +71,8 @@ python scripts/test_kong_rate_limit.py
 ## 6. Nói với người xem (30s)
 
 1. CI Semgrep+ZAP trên GitHub Actions.  
-2. Kong tách recon (GET) / exploit (POST+RL).  
-3. Agents MOCK + guardrail FTP + HITL + PII redaction.  
-4. Eval baseline→improved; FinOps CSV $0 khi MOCK.
+2. Kong tách recon (GET) / exploit (POST+RL); MCP tools + A2A.  
+3. GraphRAG + hybrid; agents MOCK + NeMo-style guardrail FTP + Slack HITL + PII.  
+4. LangSmith spans / Arize dashboard; Eval baseline→improved; FinOps + monitor; vLLM gateway stub.
 
 Keys demo: `recon-key-demo`, `exploit-key-demo`.

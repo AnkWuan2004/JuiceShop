@@ -61,6 +61,23 @@ python scripts/finops_report.py
 
 API keys Kong demo: `recon-key-demo` (GET), `exploit-key-demo` (POST).
 
+## Tuần 2 — Gateway + Agent IAM (demo nhanh)
+
+Báo cáo 1 trang: `docs/notes/Week2_API_Gateway_Agent_IAM.md` · Plan: `docs/notes/WEEK2_PLAN.md`
+
+```bash
+docker compose up -d
+python scripts/test_kong_iam.py              # 401 / 403 method / 403 path
+python scripts/test_kong_rate_limit.py       # 429 trên write
+# terminal riêng:
+python agents/mcp_server.py
+python scripts/demo_mcp_a2a.py
+python agents/kong_http_tool.py --agent recon-agent --path "/rest/products/search?q=apple"
+python agents/recon_skeleton.py              # nền Attack Surface Map (tuần 4)
+```
+
+Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agent.
+
 ## Tiến độ (12 tuần)
 
 | Tuần | Nội dung | Trạng thái |
@@ -81,8 +98,9 @@ API keys Kong demo: `recon-key-demo` (GET), `exploit-key-demo` (POST).
 
 Chi tiết nhật ký: `docs/notes/TIEN_DO.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
 
-**Tài liệu kiến thức Security (HTML):** mở file
-`C:\Users\ADMIN\Desktop\VInSOC\Project_Sentinel_Kien_Thuc_Security.html` trên trình duyệt.
+**Tài liệu kiến thức Security (HTML):** mở
+`C:\Users\ADMIN\Desktop\VInSOC\Project_Sentinel_Kien_Thuc_Security.html`
+(hoặc `docs/Project_Sentinel_Security_Guide.html`) trên trình duyệt — diễn giải đủ 12 tuần theo PDF VinUni × VinSOC.
 
 ## An toàn
 

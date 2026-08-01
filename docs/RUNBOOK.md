@@ -16,10 +16,20 @@ Build từ source (Tuần 7 FTP file / sửa juice-shop):
 docker compose -f docker-compose.yml -f docker-compose.from-source.yml up -d --build
 ```
 
+vLLM OpenAI-compatible gateway stub (Tuần 11, không cần GPU):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.vllm.yml --profile vllm up -d
+# hoặc: python scripts/vllm_gateway.py
+```
+
 - App debug/ZAP: http://localhost:3000  
 - Agent gateway: http://localhost:8000 (header `apikey`)
+- vLLM stub: http://localhost:8090/v1
+- Slack HITL UI: http://localhost:8787
+- MCP: http://127.0.0.1:8765/mcp
 
-## Seed & RAG
+## Seed & RAG (+ GraphRAG)
 
 ```bash
 pip install -r requirements.txt
@@ -28,15 +38,31 @@ python rag/ingest.py
 python rag/evaluate_retrieval.py
 ```
 
-## Agents (MOCK nếu không có OPENAI_API_KEY)
+## Agents (MOCK nếu không có OPENAI_API_KEY / OPENAI_BASE_URL)
 
 ```bash
-python agents/run_syndicate.py          # HITL auto-approve + injection before/after
+python agents/mcp_server.py             # terminal riêng
+python agents/run_syndicate.py          # HITL auto-approve + injection before/after + A2A
 python agents/run_syndicate.py --interactive-hitl
-python agents/exploit_agent.py --reject-demo   # Tuần 8 reject evidence
+python agents/exploit_agent.py --reject-demo
 python agents/pii_redaction.py --demo
 python agents/eval_pipeline.py --both
-python agents/mcp_server_stub.py        # :8765
+```
+
+Slack HITL:
+
+```bash
+python scripts/slack_hitl_server.py
+set SENTINEL_HITL=slack
+python agents/hitl_cli.py --slack-demo
+```
+
+vLLM stub client:
+
+```bash
+set OPENAI_BASE_URL=http://localhost:8090/v1
+set OPENAI_API_KEY=stub-key
+set OPENAI_MODEL=sentinel-vllm-stub
 ```
 
 Demo checklist: `docs/DEMO_CHECKLIST.md`.
@@ -50,10 +76,12 @@ python scripts/test_kong_rate_limit.py
 
 Keys: `recon-key-demo` (GET), `exploit-key-demo` (POST + rate-limit).
 
-## FinOps
+## Observability & FinOps
 
 ```bash
 python scripts/finops_report.py
+python scripts/monitor_agents.py
+python scripts/arize_viewer.py
 ```
 
 ## Sự cố thường gặp
@@ -65,6 +93,8 @@ python scripts/finops_report.py
 | 403 POST với recon key | Đúng thiết kế ACL |
 | Fuzz timeout | `compose ps`; chỉ dùng localhost |
 | RAG 0 docs | `python rag/ingest.py` |
+| MCP client fail | Chạy `python agents/mcp_server.py` (recon fallback local) |
+| Slack HITL timeout | Mở http://127.0.0.1:8787 và Approve/Reject |
 | UnicodeEncodeError Windows | `$env:PYTHONIOENCODING="utf-8"` |
 | Build juice-shop lâu | Dùng image pin; `--build` chỉ khi sửa source |
 

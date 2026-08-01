@@ -1,12 +1,17 @@
-# Kong declarative config (DB-less) — Project Sentinel Tuần 2
-# recon-agent (key: recon-key-demo)  → ACL get-only → chỉ GET/HEAD/OPTIONS
-# exploit-agent (key: exploit-key-demo) → ACL exploit → POST được + rate-limit
+# Project Sentinel — Tuần 2 Agent IAM (Kong DB-less)
+# Nguyên tắc: identity (apikey) ≠ capability (ACL + path policy). Fail closed.
+#
+# Consumers:
+#   recon-agent   (recon-key-demo)   → group get-only  → chỉ GET đọc
+#   exploit-agent (exploit-key-demo) → group exploit   → GET + POST (+ rate-limit)
+#
+# Path deny: mọi request bắt đầu /rest/admin → 403 (pre-function, hard control)
 
 _format_version: "3.0"
 _transform: true
 
 services:
-  # Route đọc — cả recon và exploit đều gọi được
+  # --- READ: GET/HEAD/OPTIONS trên /api và /rest ---
   - name: juice-shop-read
     url: http://juice-shop:3000
     routes:
@@ -38,8 +43,20 @@ services:
             - get-only
             - exploit
           hide_groups_header: true
+      - name: pre-function
+        config:
+          access:
+            - |
+              local path = kong.request.get_path()
+              if string.sub(path, 1, 11) == "/rest/admin" then
+                return kong.response.exit(403, {
+                  error = "forbidden",
+                  reason = "path_denied",
+                  path = "/rest/admin"
+                })
+              end
 
-  # Route ghi — chỉ exploit-agent; có rate-limit
+  # --- WRITE: POST/PUT/PATCH/DELETE — chỉ exploit + rate-limit ---
   - name: juice-shop-write
     url: http://juice-shop:3000
     routes:
@@ -77,6 +94,18 @@ services:
           minute: 20
           policy: local
           fault_tolerant: true
+      - name: pre-function
+        config:
+          access:
+            - |
+              local path = kong.request.get_path()
+              if string.sub(path, 1, 11) == "/rest/admin" then
+                return kong.response.exit(403, {
+                  error = "forbidden",
+                  reason = "path_denied",
+                  path = "/rest/admin"
+                })
+              end
 
 consumers:
   - username: recon-agent

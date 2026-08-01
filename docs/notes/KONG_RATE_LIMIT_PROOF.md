@@ -1,19 +1,14 @@
-# Kong Rate Limit Proof (Tuần 5)
+# Kong Rate Limit Proof
 
 Burst POST `/api/Users` với `exploit-key-demo` (limit 20/min trên write service).
 
-```json
-{
-  "url": "http://localhost:8000/api/Users",
-  "requests": 25,
-  "status_counts": {
-    "201": 19,
-    "429": 6
-  },
-  "got_429": true,
-  "note": "Kong write service rate-limit-minute=20; GET fuzz d\u00f9ng client sleep ri\u00eang."
-}
+## 2026-07-28 (`scripts/test_kong_rate_limit.py`)
+
+```
+#01–#23 → 201
+#24–#25 → 429
+Có 429: True (counts={201: 23, 429: 2})
+[PASS] Rate-limit hoạt động
 ```
 
-- Got 429: **True** (6 responses)
-- Fuzz Agent (GET) dùng `rate_limit_sleep` phía client — không đi qua plugin write RL.
+Plugin: `kong/kong.yml` → service `juice-shop-write` → `rate-limiting` minute: 20.

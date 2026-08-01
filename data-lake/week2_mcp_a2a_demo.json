@@ -1,0 +1,25 @@
+{
+  "tools": [
+    "get_scan_results",
+    "get_attack_surface",
+    "hybrid_search"
+  ],
+  "scan_ok": true,
+  "unknown_denied": true,
+  "a2a": {
+    "protocol": "sentinel-a2a/1.0",
+    "messageId": "20c925b0-ff17-47b9-899a-f55d7fdfb8d4",
+    "from": "supervisor",
+    "to": "recon-agent",
+    "task": "week2_demo",
+    "data": {
+      "note": "A2A envelope demo",
+      "tools": [
+        "get_scan_results",
+        "get_attack_surface",
+        "hybrid_search"
+      ]
+    },
+    "createdAt": "2026-07-28T02:20:51.874956+00:00"
+  }
+}

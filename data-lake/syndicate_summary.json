@@ -1,14 +1,20 @@
 {
+  "protocol": "sentinel-a2a/1.0",
   "messages": [
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "6860a7ad-a3db-444e-9afa-a3980ec47a52",
       "from": "supervisor",
       "to": "recon",
       "task": "map_attack_surface",
       "data": {
         "source": "data-lake"
-      }
+      },
+      "createdAt": "2026-07-20T04:15:05.389146+00:00"
     },
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "d358cc39-5f5f-45e6-9e9f-b0174aedba0d",
       "from": "recon",
       "to": "supervisor",
       "task": "attack_surface_done",
@@ -131,37 +137,50 @@
         "mock_enrich": true,
         "rag_hits": 3,
         "guardrail_on_ftp": true
-      }
+      },
+      "createdAt": "2026-07-20T04:15:05.724634+00:00"
     },
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "2d45dbbd-d051-42b4-ade8-72d87a9457b0",
       "from": "supervisor",
       "to": "fuzz",
       "task": "fuzz_from_surface",
       "data": {
         "map": "attack_surface_map.json"
-      }
+      },
+      "createdAt": "2026-07-20T04:15:05.732405+00:00"
     },
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "3f30dcdf-3108-4068-9724-48c05710780e",
       "from": "fuzz",
       "to": "supervisor",
       "task": "fuzz_done",
       "data": {
         "count": 6
-      }
+      },
+      "createdAt": "2026-07-20T04:15:08.697472+00:00"
     },
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "cbb578ca-38a8-4dba-9b8e-36bdc54b6733",
       "from": "supervisor",
       "to": "exploit",
       "task": "prove_finding",
       "data": {
         "need_hitl": true
-      }
+      },
+      "createdAt": "2026-07-20T04:15:08.702542+00:00"
     },
     {
+      "protocol": "sentinel-a2a/1.0",
+      "messageId": "e126f4f2-a1ca-4e44-825c-31133dc946e6",
       "from": "exploit",
       "to": "supervisor",
       "task": "exploit_done",
-      "data": "executed"
+      "data": "executed",
+      "createdAt": "2026-07-20T04:15:08.857066+00:00"
     }
   ],
   "surface_endpoints": 9,

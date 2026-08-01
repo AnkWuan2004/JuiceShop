@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-07-28T02:20:54.153338+00:00",
+  "source": "recon_skeleton+mcp_or_sqlite",
+  "endpoint_count": 3,
+  "endpoints": [
+    {
+      "path": "/unknown",
+      "risk": "medium",
+      "finding_count": 36,
+      "sample_findings": [
+        {
+          "tool": "Semgrep (SAST)",
+          "severity": "INFO",
+          "name": "javascript.express.security.audit.express-check-csurf"
+        },
+        {
+          "tool": "Semgrep (SAST)",
+          "severity": "INFO",
+          "name": "javascript.express.security.audit.express-check-csurf"
+        },
+        {
+          "tool": "OWASP ZAP (DAST)",
+          "severity": "Informational (Medium)",
+          "name": "Storable but Non-Cacheable Content"
+        }
+      ],
+      "allowed_via_kong": true
+    },
+    {
+      "path": "/rest/products/search",
+      "risk": "medium",
+      "finding_count": 9,
+      "sample_findings": [
+        {
+          "tool": "OWASP ZAP (DAST)",
+          "severity": "Medium (Medium)",
+          "name": "Cross Site Scripting (Reflected)"
+        },
+        {
+          "tool": "OWASP ZAP (DAST)",
+          "severity": "High (High)",
+          "name": "SQL Injection"
+        },
+        {
+          "tool": "Semgrep (SAST)",
+          "severity": "ERROR",
+          "name": "javascript.lang.security.audit.sqli.node-sqli"
+        }
+      ],
+      "allowed_via_kong": true
+    },
+    {
+      "path": "/rest/user/login",
+      "risk": "medium",
+      "finding_count": 5,
+      "sample_findings": [
+        {
+          "tool": "OWASP ZAP (DAST)",
+          "severity": "Low (Medium)",
+          "name": "Absence of Anti-CSRF Tokens"
+        },
+        {
+          "tool": "OWASP ZAP (DAST)",
+          "severity": "Low (Medium)",
+          "name": "Absence of Anti-CSRF Tokens"
+        },
+        {
+          "tool": "Semgrep (SAST)",
+          "severity": "ERROR",
+          "name": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection"
+        }
+      ],
+      "allowed_via_kong": true
+    }
+  ]
+}

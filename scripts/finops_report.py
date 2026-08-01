@@ -20,6 +20,7 @@ def main() -> int:
     rows = []
     total_cost = 0.0
     total_tokens = 0
+    latencies = []
     for path in sorted(TRACE_DIR.glob("llm_*.jsonl")):
         for line in path.read_text(encoding="utf-8").splitlines():
             if not line.strip():
@@ -34,28 +35,45 @@ def main() -> int:
             cost = float(data.get("est_cost_usd") or 0)
             tin = int(data.get("est_tokens_in") or 0)
             tout = int(data.get("est_tokens_out") or 0)
+            lat = data.get("latency_ms")
             total_cost += cost
             total_tokens += tin + tout
+            if lat is not None:
+                latencies.append(float(lat))
             rows.append(
                 {
                     "ts": rec.get("ts"),
                     "mock": data.get("mock"),
+                    "model": data.get("model"),
+                    "base_url": data.get("base_url"),
                     "est_tokens_in": tin,
                     "est_tokens_out": tout,
                     "est_cost_usd": cost,
+                    "latency_ms": lat if lat is not None else "",
                 }
             )
 
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_CSV, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(
-            f, fieldnames=["ts", "mock", "est_tokens_in", "est_tokens_out", "est_cost_usd"]
+            f,
+            fieldnames=[
+                "ts",
+                "mock",
+                "model",
+                "base_url",
+                "est_tokens_in",
+                "est_tokens_out",
+                "est_cost_usd",
+                "latency_ms",
+            ],
         )
         w.writeheader()
         w.writerows(rows)
 
+    avg_lat = (sum(latencies) / len(latencies)) if latencies else 0.0
     print(f"[+] {len(rows)} LLM responses → {OUT_CSV}")
-    print(f"    total_est_tokens={total_tokens} total_est_cost_usd={total_cost:.6f}")
+    print(f"    total_est_tokens={total_tokens} total_est_cost_usd={total_cost:.6f} avg_latency_ms={avg_lat:.1f}")
     if total_cost > ALERT_USD:
         print(f"[!] ALERT: estimated cost ${total_cost:.4f} > threshold ${ALERT_USD}")
         return 2

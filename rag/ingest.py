@@ -94,9 +94,18 @@ def main() -> None:
     with open(INDEX_PATH, "wb") as f:
         pickle.dump(index, f)
 
-    meta = {"count": len(docs), "backend": index["backend"], "ids": [d["id"] for d in docs]}
+    from graphrag import build_graph
+
+    graph = build_graph(docs)
+    meta = {
+        "count": len(docs),
+        "backend": index["backend"],
+        "ids": [d["id"] for d in docs],
+        "graphrag": graph.get("stats"),
+    }
     (STORE_DIR / "ingest_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"[+] BOW index → {INDEX_PATH} ({len(docs)} docs, backend={index['backend']})")
+    print(f"[+] GraphRAG → store/knowledge_graph.json ({graph['stats']})")
 
 
 if __name__ == "__main__":

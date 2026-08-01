@@ -1,10 +1,10 @@
 # Tiến độ Project Sentinel
 
-Cập nhật: 2026-07-20 (honest-done pass)
+Cập nhật: 2026-07-20 (PDF gaps closed)
 
 ## Kết luận ngắn
 
-**Tuần 0–12: verified demo local + CI.** LLM mặc định **MOCK**. Guardrails/PII/HITL/eval improvement/FinOps CSV đã nối vào pipeline. Traffic agent qua Kong `localhost:8000`.
+**Tuần 0–12: verified demo local + CI + PDF gap closures.** LLM mặc định **MOCK**. GraphRAG, MCP/A2A, NeMo-style Colang rails, Slack HITL local, LangSmith spans + Arize dashboard, vLLM gateway stub đã có. Traffic agent qua Kong `localhost:8000`.
 
 ## Chi tiết theo tuần
 
@@ -21,41 +21,47 @@ Cập nhật: 2026-07-20 (honest-done pass)
 | `parse_results.py` + seed | ✅ | → `vuln_data.db` |
 | `ATTACK_SURFACE.md` | ✅ | |
 
-### Tuần 2 — Kong & IAM
+### Tuần 2 — Kong & IAM + MCP/A2A
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | Kong + keys ACL | ✅ | `kong/kong.yml` |
 | `test_kong_iam.py` | ✅ | proof: `docs/notes/KONG_IAM_PROOF.md` |
-| MCP stub | ✅ | |
+| MCP JSON-RPC | ✅ | `agents/mcp_server.py` — tools/list + tools/call |
+| A2A envelopes | ✅ | `agents/a2a.py` → `data-lake/a2a_messages.jsonl` |
 
-### Tuần 3 — RAG
+### Tuần 3 — RAG + GraphRAG
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | ingest / hybrid BOW+BM25 | ✅ | Recon dùng `hybrid_search` |
-| Eval accuracy + P@3 + MRR | ✅ | `rag/evaluate_retrieval.py` |
+| GraphRAG | ✅ | `rag/graphrag.py` → `knowledge_graph.json` |
+| Eval accuracy + P@3 + MRR | ✅ | modes: bow / hybrid / **hybrid_graphrag** |
 
-### Tuần 4–6 — Agents
+### Tuần 4–6 — Agents + Observability
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
-| Recon DB-driven + so sánh manual | ✅ | `RECON_VS_MANUAL.md` |
-| Fuzz mutate-on-anomaly | ✅ | + `KONG_RATE_LIMIT_PROOF.md` |
-| Supervisor + file traces | ✅ | `docs/notes/TRACING.md` |
+| Recon DB-driven + MCP tools | ✅ | fallback local nếu MCP down |
+| Fuzz mutate-on-anomaly | ✅ | + Kong rate-limit proof |
+| Supervisor A2A | ✅ | |
+| LangSmith spans + Arize dashboard | ✅ | `scripts/arize_viewer.py` |
 
 ### Tuần 7–9 — Bảo vệ AI
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
-| Injection before/after | ✅ | `injection_before.json` / `after.json` |
-| HITL approve + reject | ✅ | `--reject-demo` |
-| PII trong traces + GDPR note | ✅ | `docs/PII_GDPR_NOTE.md` |
+| NeMo-style Colang rails | ✅ | `guardrails/config.yml` + `rails.co` |
+| Injection before/after | ✅ | |
+| HITL CLI + Slack local | ✅ | `scripts/slack_hitl_server.py` `:8787` |
+| PII + GDPR note | ✅ | |
 
 ### Tuần 10–12 — LLMOps & bàn giao
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
-| Eval non-circular + improvement | ✅ | `eval_improvement.json` |
-| FinOps CSV + alert threshold | ✅ | `scripts/finops_report.py` |
-| PRD / Business / Demo checklist | ✅ | `docs/DEMO_CHECKLIST.md` |
+| Eval non-circular + improvement | ✅ | |
+| vLLM OpenAI gateway stub | ✅ | compose profile `vllm` `:8090` |
+| FinOps + monitor latency/error | ✅ | `monitor_agents.py` |
+| PRD / Business / Demo checklist | ✅ | |
 
 ## Mock mode
 
-- Không set `OPENAI_API_KEY` → `LLMClient.mock = True`.
+- Không set `OPENAI_API_KEY` và không set `OPENAI_BASE_URL` → `LLMClient.mock = True`.
+- vLLM stub: `OPENAI_BASE_URL=http://localhost:8090/v1` + `OPENAI_API_KEY=stub-key`.
 - Demo: `docs/DEMO_CHECKLIST.md` + `docs/RUNBOOK.md`.

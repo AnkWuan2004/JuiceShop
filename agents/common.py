@@ -55,6 +55,12 @@ def write_trace(agent: str, event: str, data: Any) -> Path:
     record = {"ts": utc_now(), "agent": agent, "event": event, "data": safe}
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    try:
+        from observability import emit_langsmith_span
+
+        emit_langsmith_span(agent, event, safe)
+    except Exception:
+        pass
     return path
 
 
@@ -70,29 +76,46 @@ def est_cost_usd(tokens_in: int, tokens_out: int, *, mock: bool) -> float:
 
 
 class LLMClient:
-    """OpenAI nếu có key; không thì mock deterministic."""
+    """OpenAI / vLLM OpenAI-compatible nếu có key hoặc OPENAI_BASE_URL; không thì mock."""
 
     def __init__(self) -> None:
         self.api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        self.base_url = os.environ.get("OPENAI_BASE_URL", "").strip() or None
         self.model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-        self.mock = not bool(self.api_key)
+        # Mock khi không có key VÀ không có base_url (vLLM stub vẫn cần key giả)
+        self.mock = not bool(self.api_key) and not bool(self.base_url)
+        if self.base_url and not self.api_key:
+            self.api_key = "stub-key"
+            self.mock = False
+        if self.base_url and not os.environ.get("OPENAI_MODEL"):
+            self.model = "sentinel-vllm-stub"
 
     def chat(self, system: str, user: str, *, expect_json: bool = True) -> str:
         tin = est_tokens(system) + est_tokens(user)
+        t0 = time.time()
         write_trace(
             "llm",
             "request",
             {
                 "mock": self.mock,
+                "base_url": self.base_url,
+                "model": self.model,
                 "system_len": len(system),
                 "user_len": len(user),
                 "est_tokens_in": tin,
             },
         )
-        if self.mock:
-            out = self._mock_response(system, user)
-        else:
-            out = self._openai_chat(system, user)
+        err = None
+        try:
+            if self.mock:
+                out = self._mock_response(system, user)
+            else:
+                out = self._openai_chat(system, user)
+        except Exception as e:
+            err = str(e)
+            out = json.dumps({"error": err, "mock_fallback": True})
+            write_trace("llm", "error", {"error": err})
+        latency_ms = int((time.time() - t0) * 1000)
         tout = est_tokens(out)
         cost = est_cost_usd(tin, tout, mock=self.mock)
         write_trace(
@@ -100,10 +123,14 @@ class LLMClient:
             "response",
             {
                 "mock": self.mock,
+                "base_url": self.base_url,
+                "model": self.model,
                 "preview": out[:500],
                 "est_tokens_out": tout,
                 "est_tokens_in": tin,
                 "est_cost_usd": cost,
+                "latency_ms": latency_ms,
+                "error": err,
             },
         )
         return out
@@ -113,7 +140,10 @@ class LLMClient:
             from openai import OpenAI  # type: ignore
         except ImportError as e:
             raise SystemExit("Cần: pip install openai") from e
-        client = OpenAI(api_key=self.api_key)
+        kwargs = {"api_key": self.api_key}
+        if self.base_url:
+            kwargs["base_url"] = self.base_url
+        client = OpenAI(**kwargs)
         resp = client.chat.completions.create(
             model=self.model,
             messages=[

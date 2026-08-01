@@ -1,0 +1,26 @@
+{
+  "description": "Allowlist client-side cho Python HTTP tool (defense-in-depth). Kong vẫn là hard control.",
+  "gateway_base": "http://localhost:8000",
+  "allowed_hosts": ["localhost", "127.0.0.1"],
+  "agents": {
+    "recon-agent": {
+      "apikey_env": "SENTINEL_RECON_KEY",
+      "default_key": "recon-key-demo",
+      "methods": ["GET", "HEAD", "OPTIONS"],
+      "path_prefixes": ["/api", "/rest"],
+      "path_deny_prefixes": ["/rest/admin"]
+    },
+    "exploit-agent": {
+      "apikey_env": "SENTINEL_EXPLOIT_KEY",
+      "default_key": "exploit-key-demo",
+      "methods": ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"],
+      "path_prefixes": ["/api", "/rest"],
+      "path_deny_prefixes": ["/rest/admin"]
+    }
+  },
+  "limits": {
+    "timeout_seconds": 10,
+    "max_response_bytes": 4096,
+    "safe_post_bodies_only": true
+  }
+}

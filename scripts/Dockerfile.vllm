@@ -1,0 +1,5 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY scripts/vllm_gateway.py /app/scripts/vllm_gateway.py
+EXPOSE 8090
+CMD ["python", "scripts/vllm_gateway.py"]

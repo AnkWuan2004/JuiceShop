@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Tuần 2 — Chứng minh IAM qua Kong.
-Chạy khi stack đã up: docker compose up -d
-Target: http://localhost:8000 (Kong) → juice-shop:3000
+Tuần 2 — Proof đầy đủ Agent IAM qua Kong.
+Chạy: docker compose up -d  rồi  python scripts/test_kong_iam.py
 """
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "agents"))
 
 try:
     import requests
@@ -26,11 +29,11 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
 
 
 def main() -> int:
-    print("[*] Test Kong IAM (chỉ localhost:8000)\n")
+    print("[*] Test Kong IAM (localhost:8000)\n")
     passed = 0
     total = 0
 
-    # 1) Không có key → 401
+    # 1) No key → 401
     total += 1
     try:
         r = requests.get(f"{KONG}/rest/products/search?q=apple", timeout=10)
@@ -39,7 +42,7 @@ def main() -> int:
     except requests.RequestException as e:
         check("GET không key → 401", False, str(e))
 
-    # 2) Recon key + GET → 200 (hoặc 2xx từ Juice Shop)
+    # 2) Recon GET → 2xx
     total += 1
     try:
         r = requests.get(
@@ -52,7 +55,7 @@ def main() -> int:
     except requests.RequestException as e:
         check("Recon GET products → 2xx", False, str(e))
 
-    # 3) Recon key + POST admin/Users → 403 (ACL không cho write)
+    # 3) Recon POST → 403 (ACL method)
     total += 1
     try:
         r = requests.post(
@@ -66,7 +69,7 @@ def main() -> int:
     except requests.RequestException as e:
         check("Recon POST /api/Users → 403", False, str(e))
 
-    # 4) Exploit key + POST → không bị Kong 403 (có thể 4xx từ app — vẫn OK)
+    # 4) Exploit POST → không bị Kong 401/403
     total += 1
     try:
         r = requests.post(
@@ -75,12 +78,51 @@ def main() -> int:
             json={"email": "exploit-demo@test.local", "password": "x", "passwordRepeat": "x"},
             timeout=10,
         )
-        # Kong cho qua → không phải 401/403 từ gateway
         ok = r.status_code not in (401, 403)
         if check("Exploit POST /api/Users → không 401/403 Kong", ok, f"got {r.status_code}"):
             passed += 1
     except requests.RequestException as e:
         check("Exploit POST /api/Users → không 401/403 Kong", False, str(e))
+
+    # 5) Path deny: /rest/admin (recon)
+    total += 1
+    try:
+        r = requests.get(
+            f"{KONG}/rest/admin/application-configuration",
+            headers={"apikey": RECON_KEY},
+            timeout=10,
+        )
+        if check("Recon GET /rest/admin → 403 path deny", r.status_code == 403, f"got {r.status_code}"):
+            passed += 1
+    except requests.RequestException as e:
+        check("Recon GET /rest/admin → 403 path deny", False, str(e))
+
+    # 6) Path deny: /rest/admin (exploit cũng bị chặn)
+    total += 1
+    try:
+        r = requests.get(
+            f"{KONG}/rest/admin/application-configuration",
+            headers={"apikey": EXPLOIT_KEY},
+            timeout=10,
+        )
+        if check("Exploit GET /rest/admin → 403 path deny", r.status_code == 403, f"got {r.status_code}"):
+            passed += 1
+    except requests.RequestException as e:
+        check("Exploit GET /rest/admin → 403 path deny", False, str(e))
+
+    # 7) Client allowlist (Python tool) chặn trước khi gọi
+    total += 1
+    try:
+        from kong_http_tool import kong_request
+
+        try:
+            kong_request("recon-agent", "POST", "/api/Users", json_body={})
+            check("Tool deny recon POST (client)", False, "expected PermissionError")
+        except PermissionError as e:
+            if check("Tool deny recon POST (client)", "denied" in str(e).lower() or "method" in str(e).lower(), str(e)):
+                passed += 1
+    except Exception as e:
+        check("Tool deny recon POST (client)", False, str(e))
 
     print(f"\n[*] Kết quả: {passed}/{total} PASS")
     return 0 if passed == total else 1

@@ -46,7 +46,7 @@ def rrf_fuse(rank_lists: list[list[int]], k: int = 60) -> list[tuple[int, float]
     return sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
 
-def hybrid_search(question: str, top_k: int = 3) -> list[dict]:
+def hybrid_search(question: str, top_k: int = 3, *, use_graph: bool = True) -> list[dict]:
     index = load_index()
     n = len(index["docs"])
 
@@ -72,11 +72,22 @@ def hybrid_search(question: str, top_k: int = 3) -> list[dict]:
     if chroma_order:
         lists.append(chroma_order)
 
+    # Nhánh 3: GraphRAG 1-hop
+    if use_graph:
+        try:
+            from graphrag import graph_doc_order
+
+            graph_order = graph_doc_order(question, id_to_i)
+            if graph_order:
+                lists.append(graph_order)
+        except Exception:
+            pass
+
     fused = rrf_fuse(lists)
     results = []
     for doc_i, score in fused[:top_k]:
         d = index["docs"][doc_i]
-        results.append({"score": score, **d})
+        results.append({"score": score, **d, "graphrag": use_graph})
     return results
 
 
@@ -84,8 +95,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("question", nargs="?", default="XSS trên Juice Shop search")
     parser.add_argument("-k", type=int, default=3)
+    parser.add_argument("--no-graph", action="store_true")
     args = parser.parse_args()
-    for i, h in enumerate(hybrid_search(args.question, top_k=args.k), 1):
+    for i, h in enumerate(hybrid_search(args.question, top_k=args.k, use_graph=not args.no_graph), 1):
         print(f"{i}. {h['id']} (rrf={h['score']:.4f})")
 
 

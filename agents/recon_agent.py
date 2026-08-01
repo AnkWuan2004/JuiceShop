@@ -30,6 +30,14 @@ PATH_RE = re.compile(r"(/[a-zA-Z0-9_\-./{}]+)")
 
 
 def load_vulns(db_path: Path, limit: int = 40) -> list[dict]:
+    try:
+        from mcp_client import try_mcp_call
+
+        mcp = try_mcp_call("get_scan_results", {"limit": limit})
+        if mcp and mcp.get("ok") and mcp.get("results") is not None:
+            return list(mcp["results"])
+    except Exception:
+        pass
     if not db_path.exists():
         return []
     conn = sqlite3.connect(db_path)
@@ -143,6 +151,15 @@ def build_map_from_db(vulns: list[dict]) -> dict:
 
 
 def rag_snippets(query: str, k: int = 3) -> list[str]:
+    # Prefer MCP hybrid_search when SENTINEL_MCP_URL server is up
+    try:
+        from mcp_client import try_mcp_call
+
+        mcp = try_mcp_call("hybrid_search", {"query": query, "top_k": k})
+        if mcp and mcp.get("ok") and mcp.get("hits"):
+            return [f"{h['id']}: {h.get('preview') or ''}" for h in mcp["hits"]]
+    except Exception:
+        pass
     try:
         from hybrid_search import hybrid_search
 

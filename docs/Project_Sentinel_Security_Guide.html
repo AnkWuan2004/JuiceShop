@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Sentinel — Hiểu sâu như người đã tự xây (VinUni × VinSOC)</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --ink: #15202b;
+      --muted: #4a5568;
+      --line: #cfd8e3;
+      --card: #ffffff;
+      --accent: #0b6e4f;
+      --accent-dark: #085239;
+      --warn: #9a3412;
+      --danger: #9f1239;
+      --ok: #166534;
+      --code-bg: #0f172a;
+      --code-fg: #e2e8f0;
+      --nav: #0b1220;
+      --phase1: #0e7490;
+      --phase2: #b45309;
+      --phase3: #9f1239;
+      --phase4: #1d4ed8;
+      --why: #5b21b6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, #e8f0ec 0%, transparent 320px),
+        var(--bg);
+      line-height: 1.68;
+      font-size: 16.5px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    header.hero {
+      padding: 2.25rem 0 1.75rem;
+      border-bottom: 3px solid var(--ink);
+      margin-bottom: 1.75rem;
+    }
+    .brand {
+      font-family: "IBM Plex Mono", Consolas, monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+      margin: 0 0 0.65rem;
+    }
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.85rem, 4.2vw, 2.55rem);
+      line-height: 1.18;
+      margin: 0 0 0.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .lede { color: var(--muted); font-size: 1.08rem; max-width: 48rem; margin: 0; }
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 0.45rem 1.1rem;
+      margin-top: 1.2rem; font-size: 0.9rem; color: var(--muted);
+    }
+    .meta strong { color: var(--ink); }
+    nav.toc {
+      background: var(--nav);
+      color: #e2e8f0;
+      padding: 1.25rem 1.4rem;
+      margin: 0 0 2.25rem;
+    }
+    nav.toc h2 {
+      margin: 0 0 0.7rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      font-weight: 600;
+      border: 0; padding: 0;
+    }
+    nav.toc ol { margin: 0; padding-left: 1.2rem; }
+    @media (min-width: 700px) { nav.toc ol { columns: 2; } }
+    nav.toc a { color: #e2e8f0; text-decoration: none; font-size: 0.9rem; }
+    nav.toc a:hover { color: #6ee7b7; }
+    nav.toc li { break-inside: avoid; margin: 0.32rem 0; }
+    h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.5rem;
+      margin: 2.6rem 0 0.9rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--line);
+    }
+    h3 { font-size: 1.14rem; margin: 1.5rem 0 0.5rem; color: var(--accent-dark); }
+    h4 { font-size: 0.98rem; margin: 1rem 0 0.35rem; }
+    p { margin: 0.55rem 0; }
+    ul, ol { margin: 0.45rem 0 1rem; padding-left: 1.3rem; }
+    li { margin: 0.3rem 0; }
+    a { color: var(--accent-dark); }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+      margin: 0.9rem 0 1.4rem; background: var(--card);
+    }
+    th, td {
+      border: 1px solid var(--line); padding: 0.5rem 0.65rem;
+      text-align: left; vertical-align: top;
+    }
+    th {
+      background: #eef2f6; font-weight: 650; font-size: 0.78rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    code, .path {
+      font-family: "IBM Plex Mono", Consolas, monospace;
+      font-size: 0.84em; background: #e7eef2; padding: 0.08em 0.32em;
+    }
+    pre {
+      background: var(--code-bg); color: var(--code-fg);
+      padding: 0.95rem 1rem; overflow-x: auto; font-size: 0.78rem;
+      line-height: 1.45; margin: 0.9rem 0;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #ecfdf5; padding: 0.85rem 1rem; margin: 1.1rem 0;
+    }
+    .callout.warn { border-color: var(--warn); background: #fff7ed; }
+    .callout.danger { border-color: var(--danger); background: #fff1f2; }
+    .callout.info { border-color: var(--phase4); background: #eff6ff; }
+    .callout.why { border-color: var(--why); background: #f5f3ff; }
+    .callout strong.lbl { display: block; margin-bottom: 0.2rem; }
+    .phase-badge {
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 0.2rem 0.5rem; color: #fff; margin-bottom: 0.4rem;
+    }
+    .p1 { background: var(--phase1); }
+    .p2 { background: var(--phase2); }
+    .p3 { background: var(--phase3); }
+    .p4 { background: var(--phase4); }
+    .week {
+      background: var(--card); border: 1px solid var(--line);
+      padding: 1.15rem 1.25rem 1.3rem; margin: 1.25rem 0;
+    }
+    .week h3 { margin-top: 0; }
+    .tag {
+      display: inline-block; font-size: 0.72rem; padding: 0.12rem 0.4rem;
+      border: 1px solid var(--line); margin: 0 0.25rem 0.25rem 0; color: var(--muted);
+    }
+    .flow {
+      display: grid; gap: 0.4rem; margin: 1rem 0;
+      font-family: "IBM Plex Mono", Consolas, monospace; font-size: 0.78rem;
+    }
+    .flow div {
+      background: var(--code-bg); color: #a7f3d0; padding: 0.55rem 0.8rem;
+    }
+    .flow div::before {
+      content: attr(data-step); color: #64748b; margin-right: 0.7rem;
+    }
+    .grid-2 { display: grid; gap: 0.9rem; }
+    @media (min-width: 720px) { .grid-2 { grid-templates: unset; grid-template-columns: 1fr 1fr; } }
+    .mini {
+      background: var(--card); border: 1px solid var(--line); padding: 0.9rem 1rem;
+    }
+    .mini h4 { margin-top: 0; color: var(--accent-dark); }
+    .say {
+      background: #0f172a; color: #e2e8f0; padding: 0.85rem 1rem;
+      font-size: 0.92rem; margin: 0.8rem 0; border-left: 4px solid #6ee7b7;
+    }
+    .say::before { content: "Nói với mentor: "; font-weight: 700; color: #6ee7b7; }
+    .steps { counter-reset: s; list-style: none; padding-left: 0; }
+    .steps li {
+      counter-increment: s;
+      position: relative;
+      padding: 0.55rem 0.7rem 0.55rem 2.6rem;
+      border: 1px solid var(--line);
+      background: #fafbfc;
+      margin: 0.4rem 0;
+    }
+    .steps li::before {
+      content: counter(s);
+      position: absolute; left: 0.55rem; top: 0.55rem;
+      width: 1.4rem; height: 1.4rem; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    footer {
+      margin-top: 3rem; padding-top: 1.4rem; border-top: 3px solid var(--ink);
+      font-size: 0.9rem; color: var(--muted);
+    }
+    .skill { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; font-weight: 700; color: var(--phase4); }
+    @media print {
+      nav.toc { break-after: page; }
+      .week { break-inside: avoid; }
+      body { background: #fff; font-size: 11.5pt; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <p class="brand">NCUD-GPAI · VinUni × VinSOC · 12-week Capstone</p>
+      <h1>Project Sentinel — Hiểu sâu như người đã tự xây</h1>
+      <p class="lede">
+        Bạn có thể đã <em>vibe-code</em> ra repo này (AI viết phần lớn code). Tài liệu này
+        giả định bạn <strong>chưa biết gì</strong> lúc bắt đầu, rồi dẫn từng bước:
+        <strong>vấn đề đời thật → PDF yêu cầu gì → tại sao phải làm vậy → bạn đã thiết kế thế nào → mở file nào → nói gì khi mentor hỏi</strong>.
+        Đọc xong, bạn phải giải thích được dự án như chính mình đã tạo và chỉnh sửa nó.
+      </p>
+      <div class="meta">
+        <span><strong>Target lab:</strong> OWASP Juice Shop v20.1.1</span>
+        <span><strong>Staging:</strong> Docker Compose · localhost</span>
+        <span><strong>PDF:</strong> VinUni × VinSOC 12-week Project Sentinel</span>
+        <span><strong>Demo LLM:</strong> MOCK (không bắt buộc API key)</span>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="Mục lục">
+      <h2>Mục lục — đọc theo thứ tự</h2>
+      <ol>
+        <li><a href="#start">0. Bắt đầu từ zero: bạn đang giải bài gì?</a></li>
+        <li><a href="#mindset">Cách nghĩ khi “tự xây” (không chỉ chạy lệnh)</a></li>
+        <li><a href="#arch">Bức tranh kiến trúc &amp; map folder</a></li>
+        <li><a href="#safety">An toàn lab (đọc trước khi đụng agent)</a></li>
+        <li><a href="#phase1">Phase 1 — Baseline bảo mật (Tuần 1–3)</a></li>
+        <li><a href="#phase2">Phase 2 — AI tấn công staging (Tuần 4–6)</a></li>
+        <li><a href="#phase3">Phase 3 — Bảo vệ chính AI (Tuần 7–9)</a></li>
+        <li><a href="#phase4">Phase 4 — Đo lường &amp; bàn giao (Tuần 10–12)</a></li>
+        <li><a href="#decisions">Các quyết định thiết kế quan trọng (vibe → intentional)</a></li>
+        <li><a href="#walk">Walkthrough demo: bạn làm gì trên máy</a></li>
+        <li><a href="#mentor">Câu hỏi mentor hay hỏi + câu trả lời</a></li>
+        <li><a href="#skills">Bloom S1–S11</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+      </ol>
+    </nav>
+
+    <!-- ========== START ========== -->
+    <section id="start">
+      <h2>0. Bắt đầu từ zero: bạn đang giải bài gì?</h2>
+
+      <h3>Vấn đề đời thật (không cần AI cũng đã đau)</h3>
+      <p>
+        Đội AppSec nhỏ. Mỗi lần release, app có thể có lỗ hổng mới.
+        Semgrep/ZAP chạy được nhưng <strong>phun ra hàng trăm finding</strong> — không biết cái nào quan trọng,
+        không chứng minh được “cái này khai thác được trên staging”, và không có bandwidth pentest tay liên tục.
+      </p>
+
+      <h3>Ý tưởng sản phẩm (Goal PDF)</h3>
+      <div class="callout info">
+        <strong class="lbl">Goal (đúng chữ PDF)</strong>
+        Xây hệ multi-agent tự động phân tích web app, tích hợp SAST/DAST, fuzz có LLM hướng dẫn
+        qua API Gateway, và <em>chính hệ AI đó</em> phải cứng trước tấn công kiểu AI
+        (Prompt Injection, Data Poisoning).
+      </div>
+
+      <h3>Hai mặt của cùng một dự án — nhớ câu này</h3>
+      <div class="grid-2">
+        <div class="mini">
+          <h4>AI for Security</h4>
+          <p>Dùng AI để recon / fuzz / exploit <strong>trên lab</strong> Juice Shop.
+          Giống có thêm “junior pentester” chạy 24/7 nhưng phải kiểm soát.</p>
+        </div>
+        <div class="mini">
+          <h4>Security for AI</h4>
+          <p>Agent cũng là phần mềm nguy hiểm: bị dụ lệnh, lạm quyền POST, rò email trong log.
+          PDF dành cả Phase 3 để khóa chính “đội AI” của bạn.</p>
+        </div>
+      </div>
+
+      <h3>Tại sao chọn OWASP Juice Shop?</h3>
+      <ul>
+        <li>App web <strong>cố ý insecure</strong> — học được SQLi/XSS/IDOR mà không phạm pháp.</li>
+        <li>Có REST API rõ ràng → dễ gắn Kong + agent.</li>
+        <li>Pin <code>v20.1.1</code> để CI/lab ổn định (không “surprise” mỗi lần pull latest).</li>
+      </ul>
+
+      <div class="callout why">
+        <strong class="lbl">Tại sao không pentest app công ty thật?</strong>
+        Vì PDF yêu cầu staging an toàn cho intern. Agent tự gửi payload — nếu trỏ nhầm production là thảm họa.
+        Mọi agent trong repo hard-check chỉ <code>localhost</code> / Kong local.
+      </div>
+    </section>
+
+    <!-- ========== MINDSET ========== -->
+    <section id="mindset">
+      <h2>Cách nghĩ khi “tự xây” (sau khi vibe-code)</h2>
+      <p>Mỗi khối trong repo đều trả lời một câu hỏi thiết kế. Học theo khung 5 ô này:</p>
+      <ol class="steps">
+        <li><strong>Vấn đề:</strong> Nếu không có khối này, hệ thống hỏng / nguy hiểm / không đo được ở điểm nào?</li>
+        <li><strong>Yêu cầu PDF:</strong> Deliverable + Practical Task của tuần đó nói gì (đúng chữ)?</li>
+        <li><strong>Tại sao cách này:</strong> Vì sao chọn Kong / MOCK / GraphRAG / Slack local… chứ không cách khác?</li>
+        <li><strong>Luồng dữ liệu:</strong> Input vào đâu → biến đổi gì → file/evidence nào ra?</li>
+        <li><strong>Bằng chứng:</strong> File JSON/MD/CI run nào chứng minh bạn đã làm xong?</li>
+      </ol>
+      <div class="say">
+        “Em không chỉ chạy script AI generate. Em hiểu mỗi lớp giải một failure mode cụ thể — ví dụ không có HITL thì Exploit Agent có thể tự gửi SQLi.”
+      </div>
+    </section>
+
+    <!-- ========== ARCH ========== -->
+    <section id="arch">
+      <h2>Bức tranh kiến trúc &amp; map folder</h2>
+      <div class="flow">
+        <div data-step="01">Push code → GitHub Actions: Semgrep (SAST) + ZAP (DAST) → JSON artifacts</div>
+        <div data-step="02">parse_results.py → data-lake/vuln_data.db (data lake thống nhất)</div>
+        <div data-step="03">Agent → Kong :8000 (apikey + ACL + rate-limit) → Juice Shop :3000</div>
+        <div data-step="04">RAG + GraphRAG (CVE/OWASP/pentest notes) → context cho Recon</div>
+        <div data-step="05">MCP tools + Supervisor A2A: Recon → Fuzz → Exploit(HITL)</div>
+        <div data-step="06">Guardrails / PII / traces LangSmith-shape / FinOps / vLLM gateway stub</div>
+      </div>
+      <pre><code>Project-Sentinel/
+├── juice-shop/              # app cố ý lỗ hổng (+ file trap FTP Tuần 7)
+├── docker-compose.yml       # Juice Shop + Kong
+├── docker-compose.vllm.yml  # profile vllm → gateway :8090
+├── .github/workflows/       # Semgrep + ZAP CI
+├── kong/kong.yml            # Agent IAM (recon vs exploit keys)
+├── guardrails/              # config.yml + rails.co (NeMo-style)
+├── rag/                     # ingest, hybrid, graphrag, evaluate
+├── agents/                  # recon, fuzz, exploit, supervisor, mcp, a2a, hitl…
+├── scripts/                 # parse, Kong tests, Slack HITL, FinOps, Arize viewer
+├── data-lake/               # DB, evidence JSON, traces, FinOps CSV
+└── docs/                    # PRD, Business Case, Runbook, Demo checklist</code></pre>
+      <p>
+        Cổng phụ trợ: MCP <code>:8765</code> · Slack HITL UI <code>:8787</code> · vLLM stub <code>:8090/v1</code>.
+        ZAP/debug có thể gọi thẳng <code>:3000</code>; <strong>agent luôn qua Kong</strong>.
+      </p>
+    </section>
+
+    <!-- ========== SAFETY ========== -->
+    <section id="safety">
+      <h2>An toàn lab (đọc trước khi đụng agent)</h2>
+      <div class="callout danger">
+        <strong class="lbl">Phạm vi tấn công</strong>
+        Chỉ Compose local (<code>localhost:3000</code> / <code>:8000</code>). Không domain công ty, không IP ngoài.
+        Exploit Agent abort nếu Kong base không phải localhost.
+      </div>
+      <ul>
+        <li>CI không fail vì Juice Shop “đầy lỗ hổng” — <code>fail_action: false</code> / <code>|| true</code>.</li>
+        <li>HITL trước payload nguy hiểm (SQLi / state-changing).</li>
+        <li>PII redact trước khi ghi trace.</li>
+        <li>MOCK mặc định: không tốn tiền API khi học / demo.</li>
+      </ul>
+    </section>
+
+    <!-- ========== PHASE 1 ========== -->
+    <section id="phase1">
+      <h2>Phase 1 — Infrastructure &amp; Cyber Baseline</h2>
+      <p><span class="phase-badge p1">Weeks 1–3</span> PDF focus: staging, tooling truyền thống, secure access. Chưa “thả AI đánh” nếu chưa có nền.</p>
+
+      <!-- W1 -->
+      <article class="week" id="w1">
+        <h3>Tuần 1 — SAST/DAST CI/CD &amp; Attack Surface</h3>
+        <p><span class="skill">S7 · S10</span>
+          <span class="tag">PDF</span> Deploy staging · gắn SAST/DAST vào CI · gom JSON vào data lake · phân tích attack surface thủ công.
+        </p>
+
+        <h4>1) Vấn đề</h4>
+        <p>
+          Nếu chỉ có agent “đoán lỗ hổng”, bạn không có nguồn sự thật. Finding rải rác JSON Semgrep + ZAP
+          cũng vô dụng nếu không gom một chỗ. Chưa hiểu tay attack surface thì không biết AI đang nói đúng/sai.
+        </p>
+
+        <h4>2) PDF yêu cầu gì</h4>
+        <ul>
+          <li>Replica web app trên staging (ở đây: Juice Shop Compose).</li>
+          <li>Tự động chạy SAST/DAST mỗi pipeline.</li>
+          <li>Aggregate raw JSON → unified data lake.</li>
+          <li>Manual analysis attack surface trước khi tin AI.</li>
+        </ul>
+
+        <h4>3) Tại sao phải làm vậy</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          SAST thấy lỗi trong code sớm; DAST thấy lỗi khi app chạy. Hai lớp bổ sung nhau.
+          Data lake (SQLite) là “bộ nhớ chung” để Recon sau này đọc — không nhét raw XML vào prompt.
+          Note thủ công buộc bạn hiểu endpoint trước khi agent map — tránh circular trust.
+        </div>
+
+        <h4>4) Bạn đã thiết kế thế nào (luồng)</h4>
+        <ol class="steps">
+          <li>Compose pin image <code>bkimminich/juice-shop:v20.1.1</code> → ổn định lab.</li>
+          <li>Workflow <code>.github/workflows/security-scan.yml</code> chạy Semgrep + ZAP, upload artifacts.</li>
+          <li><code>scripts/parse_results.py</code> (hoặc seed) nạp vào <code>data-lake/vuln_data.db</code>.</li>
+          <li>Viết <code>docs/notes/ATTACK_SURFACE.md</code>: auth, <code>/rest/*</code>, <code>/api/*</code>, SQLi search, FTP…</li>
+        </ol>
+
+        <h4>5) File cần mở</h4>
+        <p><code>security-scan.yml</code> · <code>parse_results.py</code> · <code>vuln_data.db</code> · <code>ATTACK_SURFACE.md</code></p>
+        <div class="say">“Em dựng staging Juice Shop, gắn Semgrep+ZAP vào CI, parse vào SQLite làm data lake, rồi tự map attack surface trước khi dùng agent.”</div>
+      </article>
+
+      <!-- W2 -->
+      <article class="week" id="w2">
+        <h3>Tuần 2 — API Gateway, Agent IAM, MCP &amp; A2A</h3>
+        <p><span class="skill">S4</span>
+          <span class="tag">PDF</span> Mọi traffic staging qua Gateway · IAM riêng cho agent (scoped) · MCP/A2A.
+        </p>
+
+        <h4>1) Vấn đề</h4>
+        <p>
+          Nếu mọi agent dùng chung một token admin và gọi thẳng app, một agent bị hijack = toàn quyền phá staging.
+          Không có gateway thì không có chỗ gắn rate-limit / ACL / audit.
+        </p>
+
+        <h4>2) PDF yêu cầu gì</h4>
+        <ul>
+          <li>Route traffic qua API Gateway (Kong/Tyk…).</li>
+          <li>Agent IAM: quyền hẹp (ví dụ query users nhưng không admin).</li>
+          <li>Gợi ý MCP/A2A làm kênh tool / message giữa agent.</li>
+        </ul>
+
+        <h4>3) Tại sao phải làm vậy</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          <strong>Least privilege</strong>: Recon chỉ cần đọc (GET) → key <code>recon-key-demo</code>.
+          Exploit mới được ghi (POST) → <code>exploit-key-demo</code> + rate-limit.
+          MCP = chuẩn hóa “tool” (đọc DB, search RAG) thay vì mỗi agent tự mở SQLite lung tung.
+          A2A = message có <code>messageId</code> / protocol để truy vết syndicate (quan sát được).
+        </div>
+
+        <h4>4) Luồng bạn xây</h4>
+        <ol class="steps">
+          <li>Kong db-less trong Compose, config <code>kong/kong.yml</code>.</li>
+          <li>ACL: recon GET OK, recon POST → 403; exploit POST OK; không key → 401.</li>
+          <li><code>agents/mcp_server.py</code>: JSON-RPC <code>tools/list</code> + <code>tools/call</code>
+            (get_scan_results, get_attack_surface, hybrid_search).</li>
+          <li><code>agents/a2a.py</code> + supervisor ghi <code>data-lake/a2a_messages.jsonl</code>.</li>
+          <li>Proof: <code>test_kong_iam.py</code> 4/4 · <code>KONG_IAM_PROOF.md</code> · rate-limit 429.</li>
+        </ol>
+        <div class="say">“Em không cho agent gọi thẳng Juice Shop. Mọi request qua Kong với key riêng — recon không POST được — và tool đi qua MCP, message syndicate theo A2A.”</div>
+      </article>
+
+      <!-- W3 -->
+      <article class="week" id="w3">
+        <h3>Tuần 3 — Threat Intel RAG + GraphRAG</h3>
+        <p><span class="skill">S3</span>
+          <span class="tag">PDF</span> RAG hybrid (+ GraphRAG) · ingest CVE/OWASP/pentest · đo retrieval accuracy.
+        </p>
+
+        <h4>1) Vấn đề</h4>
+        <p>
+          LLM không nhớ hết CVE/CWE. Nếu Recon chỉ nhìn finding Semgrep mà không có cheat sheet,
+          nó dễ map sai hoặc bịa. Cần “thư viện threat intel” tra cứu được và <strong>đo được</strong> độ chính xác.
+        </p>
+
+        <h4>2) Tại sao Hybrid + GraphRAG</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          BM25/BOW giỏi khớp từ khóa (“SQLi”, “Log4Shell”). GraphRAG nối entity (CVE ↔ topic ↔ endpoint ↔ doc)
+          nên câu hỏi “Juice Shop search SQL” kéo đúng doc pentest + CWE liên quan.
+          Đo P@3 / MRR vì PDF yêu cầu “highly accurate” — không chỉ “có RAG là xong”.
+        </div>
+
+        <h4>3) Luồng</h4>
+        <ol class="steps">
+          <li>Viết/gom <code>rag/data/*.md</code> (CVE, OWASP, fake pentest Juice).</li>
+          <li><code>ingest.py</code> → BOW index + <code>graphrag.build_graph()</code> → <code>knowledge_graph.json</code>.</li>
+          <li><code>hybrid_search</code> RRF fuse BOW + BM25 + graph ranks.</li>
+          <li><code>evaluate_retrieval.py</code> xuất 3 mode: bow / hybrid / <strong>hybrid_graphrag</strong>.</li>
+        </ol>
+        <div class="say">“Em ingest threat intel, hybrid search, thêm GraphRAG 1-hop, và đo accuracy/P@3/MRR — không tin RAG bằng cảm giác.”</div>
+      </article>
+    </section>
+
+    <!-- ========== PHASE 2 ========== -->
+    <section id="phase2">
+      <h2>Phase 2 — AI for Security (LLM-guided pentest)</h2>
+      <p><span class="phase-badge p2">Weeks 4–6</span> PDF: dùng AI tấn công &amp; phân tích staging — nhưng vẫn qua Kong.</p>
+
+      <article class="week" id="w4">
+        <h3>Tuần 4 — Recon Agent → Attack Surface Map</h3>
+        <p><span class="skill">S1 · S5</span>
+          <span class="tag">PDF</span> Agent nối data lake + RAG → JSON Attack Surface Map.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Finding thô trong DB chưa phải “bản đồ tấn công”. Cần agent đọc, cắt context (token budget), cross-check RAG, xuất endpoint/risk có cấu trúc.</p>
+
+        <h4>Tại sao DB-driven rồi mới LLM enrich</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          Nếu MOCK/LLM bịa map cố định, eval và demo là giả. Map phải <strong>phụ thuộc</strong> <code>vuln_data.db</code>.
+          LLM chỉ enrich (tóm tắt / thêm CVE hint). Context engineering: truncate log, không nhét cả DB vào prompt.
+        </div>
+
+        <h4>Luồng trong <code>recon_agent.py</code></h4>
+        <ol class="steps">
+          <li>Load vulns (ưu tiên MCP <code>get_scan_results</code>, fallback SQLite).</li>
+          <li>Gom theo path → endpoints + risk.</li>
+          <li>Lấy snippet RAG (MCP <code>hybrid_search</code> hoặc local GraphRAG).</li>
+          <li>Fetch FTP trap → sanitize guardrail → LLM enrich.</li>
+          <li>Ghi <code>attack_surface_map.json</code> + so sánh <code>RECON_VS_MANUAL.md</code>.</li>
+        </ol>
+        <div class="say">“Recon của em không hallucinate map — nó aggregate từ SAST/DAST DB, bổ sung RAG, rồi mới nhờ LLM enrich.”</div>
+      </article>
+
+      <article class="week" id="w5">
+        <h3>Tuần 5 — LLM-guided Fuzzing + mutate</h3>
+        <p><span class="skill">S4 · S10</span>
+          <span class="tag">PDF</span> Tool Python gửi malformed request qua Gateway · đọc 500/stack · mutate đào sâu.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Fuzz random thuần lãng phí request và dễ bị rate-limit. Cần payload dựa trên map Recon, và khi thấy anomaly thì biến đổi payload tiếp.</p>
+
+        <h4>Tại sao</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          PDF muốn “intelligent fuzzing engine”: LLM đề xuất payload → wrapper HTTP qua Kong →
+          nếu status/body bất thường → mutate (đổi quote, thêm UNION…).
+          Dùng recon key (GET) để fuzz đọc; write path vẫn bị Kong siết riêng.
+        </div>
+
+        <h4>Evidence</h4>
+        <p><code>fuzz_findings.json</code> có field <code>mutations</code> · proof RL: <code>KONG_RATE_LIMIT_PROOF.md</code>.</p>
+        <div class="say">“Fuzz không phải bắn bừa — em lấy target từ Attack Surface Map, gửi qua Kong, và mutate khi thấy anomaly.”</div>
+      </article>
+
+      <article class="week" id="w6">
+        <h3>Tuần 6 — Multi-agent Syndicate + Observability</h3>
+        <p><span class="skill">S2</span>
+          <span class="tag">PDF</span> Supervisor + Recon + Fuzz + Exploit · trace reasoning (LangSmith/Arize…).
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Ba agent rời sẽ loạn thứ tự và không debug được “ai bảo ai làm gì”. Cần supervisor + message chuẩn + observability.</p>
+
+        <h4>Tại sao A2A + LangSmith-shape + Arize-local</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          PDF nêu LangSmith/Arize làm ví dụ. Lab ghi file spans cùng shape + dashboard HTML local
+          (không bắt buộc cloud key) vẫn chứng minh được message flow &amp; LLM calls.
+          A2A envelope thêm <code>protocol</code>, <code>messageId</code>, <code>createdAt</code> để audit.
+        </div>
+
+        <h4>Luồng</h4>
+        <pre><code>Supervisor
+  → A2A map_attack_surface → Recon
+  → A2A fuzz_from_surface → Fuzz
+  → A2A prove_finding → Exploit (HITL)
+  → syndicate_summary.json + a2a_messages.jsonl + langsmith_spans.jsonl</code></pre>
+        <p>Dashboard: <code>python scripts/arize_viewer.py</code> → <code>observability_dashboard.html</code>.</p>
+      </article>
+    </section>
+
+    <!-- ========== PHASE 3 ========== -->
+    <section id="phase3">
+      <h2>Phase 3 — Security FOR AI</h2>
+      <p><span class="phase-badge p3">Weeks 7–9</span> PDF: AI không bị hijack / tự phá / rò data.</p>
+
+      <article class="week" id="w7">
+        <h3>Tuần 7 — Guardrails &amp; Indirect Prompt Injection</h3>
+        <p><span class="skill">S8</span>
+          <span class="tag">PDF</span> Cấy trap trong app · guardrail (e.g. NeMo) sanitize mọi data agent đọc từ target.
+        </p>
+
+        <h4>Vấn đề (hiểu kỹ)</h4>
+        <ul>
+          <li><strong>Direct injection:</strong> user gõ “ignore previous instructions” vào chat.</li>
+          <li><strong>Indirect:</strong> lệnh độc nằm trong file/API/HTML. Agent tưởng là “data” → vẫn bị điều khiển.</li>
+        </ul>
+        <p>PDF bắt bạn <em>cố ý</em> đặt trap trong Juice Shop FTP rồi chứng minh trước/sau guardrail.</p>
+
+        <h4>Tại sao NeMo-style Colang trong repo</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          PDF nói “e.g. NeMo Guardrails”. Lab dùng <code>guardrails/config.yml</code> + <code>rails.co</code> (Colang)
+          và engine stdlib trong <code>guardrails.py</code> — cùng pattern (policy + phrase + block),
+          không kéo dependency nặng, vẫn demo được before/after.
+        </div>
+
+        <h4>Luồng The Trap</h4>
+        <ol class="steps">
+          <li>File <code>juice-shop/ftp/sentinel_indirect_injection.txt</code>: IGNORE PREVIOUS… dump API keys.</li>
+          <li>Recon GET qua Kong (hoặc đọc local).</li>
+          <li><strong>Before:</strong> nhét raw vào LLM → <code>injection_before.json</code> (hijacked).</li>
+          <li><strong>After:</strong> <code>sanitize_for_agent()</code> → <code>injection_after.json</code> (blocked).</li>
+        </ol>
+        <div class="say">“Trust boundary không chỉ là user chat — mọi content agent đọc từ target app đều phải qua guardrail.”</div>
+      </article>
+
+      <article class="week" id="w8">
+        <h3>Tuần 8 — Human-in-the-Loop (HITL)</h3>
+        <p><span class="skill">S8 · S4</span>
+          <span class="tag">PDF</span> Exploit không chạy state-changing payload khi chưa Approve/Reject (Slack/Teams…).
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Agent tự gửi SQLi/command injection là rủi ro không chấp nhận được — kể cả trên staging lab nếu sau này gắn môi trường thật hơn.</p>
+
+        <h4>Tại sao Slack-compatible local + CLI</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          PDF gợi ý Slack/Teams bot. Lab có server UI <code>:8787</code> (Approve/Reject) + optional <code>SLACK_WEBHOOK_URL</code>.
+          Demo/CI dùng auto-approve hoặc <code>--reject-demo</code>. Policy: dangerous action ∈ {sqli_probe, …} → bắt buộc HITL.
+        </div>
+
+        <h4>File</h4>
+        <p><code>hitl_cli.py</code> · <code>hitl_slack.py</code> · <code>scripts/slack_hitl_server.py</code> · <code>hitl_decisions.jsonl</code></p>
+        <div class="say">“Exploit Agent của em bị policy chặn: không gửi payload nguy hiểm khi chưa có quyết định người — kênh Slack-local hoặc CLI.”</div>
+      </article>
+
+      <article class="week" id="w9">
+        <h3>Tuần 9 — PII Redaction</h3>
+        <p><span class="skill">S5 · S8</span>
+          <span class="tag">PDF</span> Dump mock user data → che PII trước khi vào memory/log/RAG.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Pentest thành công có thể kéo email/password/SSN mock. Nếu ghi thẳng vào trace/RAG = tự tạo data leak thứ hai.</p>
+
+        <h4>Tại sao redact ở <code>write_trace</code></h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          Một điểm chặn tập trung: mọi agent gọi <code>write_trace</code> đều đã redact.
+          Không dựa vào từng agent “nhớ che”. Có demo before/after + note GDPR-style.
+        </div>
+        <p>File: <code>pii_redaction.py</code> · <code>pii_before.txt</code> / <code>pii_after.txt</code> · <code>PII_GDPR_NOTE.md</code></p>
+      </article>
+    </section>
+
+    <!-- ========== PHASE 4 ========== -->
+    <section id="phase4">
+      <h2>Phase 4 — LLMOps &amp; Handover</h2>
+      <p><span class="phase-badge p4">Weeks 10–12</span> PDF: prototype → tool đo được, kiểm soát chi phí, bàn giao.</p>
+
+      <article class="week" id="w10">
+        <h3>Tuần 10 — Eval &amp; cải thiện prompt</h3>
+        <p><span class="skill">S9</span>
+          <span class="tag">PDF</span> Benchmark endpoint đã biết · LLM-as-Judge · giảm FP · chỉnh prompt.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Không có eval thì không biết agent “giỏi” hay chỉ may. Eval vòng tròn (nhúng sẵn đáp án vào hypothesis) là tự lừa.</p>
+
+        <h4>Tại sao non-circular + baseline→improved</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          Hypothesis lấy từ map/DB/fuzz — không copy ground-truth signals.
+          Chạy baseline rồi vòng improved (thêm rule/prompt) → đo delta detect rate (lab đã thấy +30%).
+          Đó là LLMOps thật: đo → sửa → đo lại.
+        </div>
+        <p>File: <code>eval_pipeline.py</code> · <code>eval_report.json</code> · <code>eval_improvement.json</code> · <code>BENCHMARK.md</code></p>
+      </article>
+
+      <article class="week" id="w11">
+        <h3>Tuần 11 — Deploy, vLLM gateway, FinOps, monitor</h3>
+        <p><span class="skill">S6 · S7</span>
+          <span class="tag">PDF</span> Containerize · vLLM · monitor latency/error/token · alert cost/drift.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Demo MOCK ổn chưa đủ cho “production mindset”. Cần đường chạy model qua OpenAI-compatible API, đo chi phí, cảnh báo.</p>
+
+        <h4>Tại sao vLLM stub (không bắt buộc GPU)</h4>
+        <div class="callout why">
+          <strong class="lbl">Tại sao</strong>
+          PDF muốn vLLM cho throughput. Máy intern thường không có GPU.
+          Em dựng gateway OpenAI-compatible (<code>:8090</code>) + Compose profile <code>vllm</code>.
+          <code>LLMClient</code> đọc <code>OPENAI_BASE_URL</code> — sau này trỏ model thật không đổi code agent.
+          FinOps CSV + <code>monitor_agents.py</code> alert cost / latency / error_rate.
+        </div>
+        <pre><code>docker compose -f docker-compose.yml -f docker-compose.vllm.yml --profile vllm up -d
+# OPENAI_BASE_URL=http://localhost:8090/v1
+# OPENAI_API_KEY=stub-key</code></pre>
+      </article>
+
+      <article class="week" id="w12">
+        <h3>Tuần 12 — PRD, Business Case, Demo stakeholder</h3>
+        <p><span class="skill">S11</span>
+          <span class="tag">PDF</span> PRD cuối · so ROI vs pentest tay · demo live cho non-tech.
+        </p>
+
+        <h4>Vấn đề</h4>
+        <p>Kỹ thuật đúng vẫn fail nếu Product/Exec không hiểu giá trị. Cần ngôn ngữ business + checklist demo 5 phút.</p>
+
+        <h4>Bạn mở gì</h4>
+        <ul>
+          <li><code>docs/PRD.md</code> — bài toán, scope, non-goals, success metrics.</li>
+          <li><code>docs/BUSINESS_CASE.md</code> — ROI tự động hóa vs pentest thủ công.</li>
+          <li><code>docs/DEMO_CHECKLIST.md</code> + <code>RUNBOOK.md</code>.</li>
+        </ul>
+        <div class="say">“Sentinel không thay pentester senior — nó giảm thời gian triage finding và chứng minh an toàn trên staging, với IAM + HITL để không mất kiểm soát.”</div>
+      </article>
+    </section>
+
+    <!-- ========== DECISIONS ========== -->
+    <section id="decisions">
+      <h2>Các quyết định thiết kế quan trọng (từ vibe → intentional)</h2>
+      <table>
+        <thead>
+          <tr><th>Quyết định</th><th>Thay vì</th><th>Lý do bạn chọn</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Juice Shop lab + localhost only</td>
+            <td>Pentest app nội bộ thật</td>
+            <td>An toàn pháp lý / PDF staging; agent có thể gửi payload nguy hiểm</td>
+          </tr>
+          <tr>
+            <td>MOCK LLM mặc định</td>
+            <td>Luôn gọi GPT cloud</td>
+            <td>Demo offline, $0, deterministic evidence; vẫn giữ interface OpenAI</td>
+          </tr>
+          <tr>
+            <td>Kong ACL 2 key</td>
+            <td>1 admin token</td>
+            <td>Least privilege — Recon không được POST</td>
+          </tr>
+          <tr>
+            <td>Map DB-driven</td>
+            <td>JSON cứng trong mock</td>
+            <td>Honest demo; eval không vòng tròn</td>
+          </tr>
+          <tr>
+            <td>GraphRAG + hybrid</td>
+            <td>Chỉ embedding / chỉ keyword</td>
+            <td>PDF yêu cầu hybrid &amp; GraphRAG; đo được P@3/MRR</td>
+          </tr>
+          <tr>
+            <td>NeMo-style Colang files</td>
+            <td>pip nemoguardrails nặng</td>
+            <td>Đúng pattern PDF “e.g. NeMo”; lab nhẹ</td>
+          </tr>
+          <tr>
+            <td>Slack HITL local :8787</td>
+            <td>Bắt buộc Slack workspace</td>
+            <td>Đủ Approve/Reject + webhook thật nếu có</td>
+          </tr>
+          <tr>
+            <td>vLLM OpenAI gateway stub</td>
+            <td>Bắt buộc GPU</td>
+            <td>Architecture sẵn; sau gắn model thật qua cùng base_url</td>
+          </tr>
+          <tr>
+            <td>File LangSmith spans + Arize HTML</td>
+            <td>Cloud-only observability</td>
+            <td>PDF “like LangSmith/Arize”; demo không cần SaaS key</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========== WALK ========== -->
+    <section id="walk">
+      <h2>Walkthrough demo: bạn làm gì trên máy</h2>
+      <p>Làm theo thứ tự này một lần — vừa ôn kiến trúc vừa có evidence mới.</p>
+      <ol class="steps">
+        <li><code>docker compose up -d</code> → mở Juice Shop :3000, Kong :8000.</li>
+        <li><code>python rag/ingest.py</code> rồi <code>python rag/evaluate_retrieval.py</code> — nhìn key <code>hybrid_graphrag</code>.</li>
+        <li>Terminal A: <code>python agents/mcp_server.py</code> · Terminal B: <code>python agents/mcp_client.py</code>.</li>
+        <li><code>python agents/run_syndicate.py</code> — xem A2A log, injection before/after, exploit HITL auto-approve.</li>
+        <li><code>python agents/exploit_agent.py --reject-demo</code> — chứng minh reject.</li>
+        <li>(Tuỳ chọn) <code>python scripts/slack_hitl_server.py</code> + <code>SENTINEL_HITL=slack</code> + Approve trên UI.</li>
+        <li><code>python agents/eval_pipeline.py --both</code> · <code>scripts/finops_report.py</code> · <code>monitor_agents.py</code> · <code>arize_viewer.py</code>.</li>
+        <li>Kong: <code>test_kong_iam.py</code> + <code>test_kong_rate_limit.py</code>.</li>
+      </ol>
+      <p>Chi tiết lệnh: <code>docs/DEMO_CHECKLIST.md</code> · <code>docs/RUNBOOK.md</code>.</p>
+    </section>
+
+    <!-- ========== MENTOR ========== -->
+    <section id="mentor">
+      <h2>Câu hỏi mentor hay hỏi — trả lời như người đã build</h2>
+      <table>
+        <thead><tr><th>Câu hỏi</th><th>Trả lời ngắn (ý chính)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Tại sao cần cả SAST và DAST?</td>
+            <td>SAST thấy pattern trong code; DAST thấy lỗi khi chạy. Gom vào data lake để Recon dùng chung.</td>
+          </tr>
+          <tr>
+            <td>Agent IAM khác user IAM chỗ nào?</td>
+            <td>Identity gắn với <em>vai trò agent</em> (recon/exploit), scoped tool/route, không phải tài khoản end-user shop.</td>
+          </tr>
+          <tr>
+            <td>Indirect injection nguy hiểm hơn direct vì sao?</td>
+            <td>Nằm trong data agent tự fetch — người vận hành không gõ lệnh độc nhưng model vẫn bị điều khiển.</td>
+          </tr>
+          <tr>
+            <td>Làm sao biết RAG không kém?</td>
+            <td>Gold set 10 câu; đo accuracy, P@3, MRR cho bow/hybrid/graphrag.</td>
+          </tr>
+          <tr>
+            <td>Eval 100% có phải gian lận?</td>
+            <td>Không nếu hypothesis lấy từ map/DB; có nếu nhúng sẵn ground-truth. Lab cố ý non-circular + đo delta improve.</td>
+          </tr>
+          <tr>
+            <td>Không có GPU thì Week 11 fail?</td>
+            <td>Không — gateway OpenAI-compatible + FinOps/monitor; GPU model là bước nâng khi có hạ tầng.</td>
+          </tr>
+          <tr>
+            <td>Hệ này thay pentest tay được không?</td>
+            <td>Không (ghi trong PRD). Nó tăng tốc triage + proof an toàn trên staging, có HITL.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========== SKILLS ========== -->
+    <section id="skills">
+      <h2>Bloom skills S1–S11 ↔ tuần</h2>
+      <table>
+        <thead><tr><th>Mã</th><th>Kỹ năng</th><th>Tuần / bằng chứng</th></tr></thead>
+        <tbody>
+          <tr><td>S1</td><td>Build AI Agent</td><td>Tuần 4 Recon</td></tr>
+          <tr><td>S2</td><td>Multi-Agent</td><td>Tuần 6 Supervisor + A2A</td></tr>
+          <tr><td>S3</td><td>RAG hybrid / GraphRAG</td><td>Tuần 3</td></tr>
+          <tr><td>S4</td><td>Custom tools / MCP</td><td>Tuần 2 MCP · Tuần 5 HTTP tool</td></tr>
+          <tr><td>S5</td><td>Context engineering</td><td>Tuần 4 truncate · Tuần 9 PII</td></tr>
+          <tr><td>S6</td><td>Deploy / monitor</td><td>Tuần 11 Compose + monitor</td></tr>
+          <tr><td>S7</td><td>CI/CD &amp; LLMOps</td><td>Tuần 1 Actions · Tuần 10–11</td></tr>
+          <tr><td>S8</td><td>Guardrails &amp; HITL</td><td>Tuần 7–9</td></tr>
+          <tr><td>S9</td><td>Eval &amp; benchmark</td><td>Tuần 10</td></tr>
+          <tr><td>S10</td><td>Vibe coding + review</td><td>Toàn pipeline — bạn đang học “tại sao”</td></tr>
+          <tr><td>S11</td><td>PRD &amp; ROI</td><td>Tuần 12</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========== GLOSSARY ========== -->
+    <section id="glossary">
+      <h2>Glossary (học thuộc 1 câu / từ)</h2>
+      <table>
+        <thead><tr><th>Thuật ngữ</th><th>Một câu</th></tr></thead>
+        <tbody>
+          <tr><td>SAST</td><td>Quét lỗ hổng trong mã nguồn, không cần chạy app</td></tr>
+          <tr><td>DAST</td><td>Quét bằng cách tấn công app đang chạy</td></tr>
+          <tr><td>Data lake</td><td>Chỗ gom finding thô (ở đây: SQLite + JSON)</td></tr>
+          <tr><td>API Gateway</td><td>Lớp trung gian authz / rate-limit / log trước khi vào app</td></tr>
+          <tr><td>Agent IAM</td><td>Danh tính + quyền riêng cho từng AI agent</td></tr>
+          <tr><td>MCP</td><td>Protocol/tool server để agent gọi capability chuẩn hóa</td></tr>
+          <tr><td>A2A</td><td>Envelope message giữa các agent (có id, protocol)</td></tr>
+          <tr><td>RAG</td><td>Tra cứu tài liệu rồi mới để LLM trả lời</td></tr>
+          <tr><td>Hybrid Search</td><td>Kết hợp lexical (BM25/BOW) ± vector</td></tr>
+          <tr><td>GraphRAG</td><td>Tra cứu có knowledge graph entity–relation</td></tr>
+          <tr><td>Fuzzing</td><td>Gửi input bất thường để tìm lỗi</td></tr>
+          <tr><td>Prompt injection</td><td>Chèn lệnh khiến LLM làm sai nhiệm vụ</td></tr>
+          <tr><td>Guardrails</td><td>Lọc input/output / policy để AI không bị lạm dụng</td></tr>
+          <tr><td>HITL</td><td>Người duyệt trước hành động rủi ro</td></tr>
+          <tr><td>PII</td><td>Thông tin định danh cá nhân cần che</td></tr>
+          <tr><td>False positive</td><td>Báo lỗ hổng nhưng thực ra không</td></tr>
+          <tr><td>FinOps</td><td>Theo dõi và kiểm soát chi phí token/AI</td></tr>
+          <tr><td>vLLM</td><td>Serving LLM hiệu năng cao (lab: gateway OpenAI-compatible)</td></tr>
+          <tr><td>PRD</td><td>Tài liệu yêu cầu sản phẩm</td></tr>
+          <tr><td>ROI</td><td>So sánh lợi ích với chi phí đầu tư</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>
+        <strong>Project Sentinel</strong> — sổ tay “hiểu như người đã tự xây” cho capstone
+        VinUni × VinSOC (NCUD-GPAI). Cập nhật theo repo đã đóng gap PDF (GraphRAG, MCP/A2A,
+        NeMo-style rails, Slack HITL, observability, vLLM gateway).
+      </p>
+      <p>
+        Mở file bằng trình duyệt. In PDF: Ctrl+P → Save as PDF.
+        Checklist chạy máy: <code>Project-Sentinel/docs/DEMO_CHECKLIST.md</code>.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

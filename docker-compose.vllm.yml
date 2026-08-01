@@ -1,0 +1,26 @@
+# Tuần 11 — vLLM OpenAI-compatible gateway (stub, no GPU)
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.vllm.yml --profile vllm up -d
+#   set OPENAI_BASE_URL=http://localhost:8090/v1
+#   set OPENAI_API_KEY=stub-key
+#   set OPENAI_MODEL=sentinel-vllm-stub
+
+services:
+  vllm-gateway:
+    profiles: ["vllm"]
+    image: python:3.12-slim
+    container_name: sentinel-vllm-gateway
+    working_dir: /app
+    command: ["python", "scripts/vllm_gateway.py"]
+    volumes:
+      - ./:/app:ro
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    networks:
+      - sentinel-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

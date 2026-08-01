@@ -1,25 +1,25 @@
-# Tracing (Tuần 6) — file JSONL
+# Tracing & Observability (Tuần 6)
 
-Project Sentinel dùng **file traces** (không bắt buộc LangSmith/Langfuse).
+Project Sentinel ghi **file traces** + **LangSmith-shaped spans** + **Arize-local dashboard**.
 
 ## Vị trí
 
-`data-lake/traces/{agent}_{YYYYMMDD}.jsonl`
+| Artifact | Path |
+|---|---|
+| Agent traces | `data-lake/traces/{agent}_{YYYYMMDD}.jsonl` |
+| LangSmith spans | `data-lake/traces/langsmith_spans.jsonl` |
+| A2A messages | `data-lake/a2a_messages.jsonl` |
+| Dashboard | `data-lake/observability_dashboard.html` |
 
 Agents: `recon`, `fuzz`, `exploit`, `supervisor`, `llm`, `eval`.
 
-## Schema
+## Schema (agent JSONL)
 
 ```json
 {"ts": "ISO-8601", "agent": "fuzz", "event": "probe", "data": {}}
 ```
 
-| Field | Ý nghĩa |
-|---|---|
-| `ts` | UTC timestamp |
-| `agent` | tên agent |
-| `event` | loại sự kiện (`probe`, `request`, `response`, …) |
-| `data` | payload đã **PII-redact** |
+Payload đã **PII-redact** trước khi persist (`write_trace` → `observability.emit_langsmith_span`).
 
 ## LLM FinOps fields
 
@@ -28,8 +28,16 @@ Trong `event=response` của agent `llm`:
 - `est_tokens_in` / `est_tokens_out`
 - `est_cost_usd` (MOCK = 0)
 
-Gom báo cáo: `python scripts/finops_report.py` → `data-lake/finops_weekly.csv`.
+```bash
+python scripts/finops_report.py
+python scripts/monitor_agents.py
+python scripts/arize_viewer.py
+```
 
-## Message format syndicate
+## Message format syndicate (A2A)
 
-Supervisor dùng `{from, to, task, data}` — xem `agents/supervisor.py` và `syndicate_summary.json`.
+Supervisor dùng envelope `sentinel-a2a/1.0`:
+
+`{protocol, messageId, from, to, task, data, createdAt}`
+
+Xem `agents/a2a.py`, `agents/supervisor.py`, `syndicate_summary.json`.

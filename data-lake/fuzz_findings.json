@@ -2,7 +2,7 @@
   {
     "url": "http://localhost:8000/rest/products/search?q=%27",
     "status": 200,
-    "latency_ms": 296,
+    "latency_ms": 408,
     "body_preview": "{\"status\":\"success\",\"data\":[]}",
     "anomaly": false,
     "payload": "'",
@@ -11,7 +11,7 @@
   {
     "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1--",
     "status": 500,
-    "latency_ms": 84,
+    "latency_ms": 105,
     "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
     "anomaly": true,
     "payload": "' OR 1=1--",
@@ -31,7 +31,7 @@
   {
     "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1--%27",
     "status": 500,
-    "latency_ms": 78,
+    "latency_ms": 110,
     "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
     "anomaly": true,
     "payload": "' OR 1=1--'",
@@ -41,7 +41,7 @@
   {
     "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1%2F%2A%27",
     "status": 500,
-    "latency_ms": 31,
+    "latency_ms": 48,
     "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
     "anomaly": true,
     "payload": "' OR 1=1/*'",
@@ -51,7 +51,7 @@
   {
     "url": "http://localhost:8000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E",
     "status": 200,
-    "latency_ms": 87,
+    "latency_ms": 50,
     "body_preview": "{\"status\":\"success\",\"data\":[]}",
     "anomaly": false,
     "payload": "<script>alert(1)</script>",
@@ -60,8 +60,8 @@
   {
     "url": "http://localhost:8000/ftp/?q=",
     "status": 404,
-    "latency_ms": 32,
-    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"5900ac6389510d085efd1d7368705f28\"\n}",
+    "latency_ms": 14,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"40d6292f2faace6718e20a046428f061\"\n}",
     "anomaly": false,
     "payload": "",
     "mutations": []
