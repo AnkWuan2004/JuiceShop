@@ -98,10 +98,6 @@ Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agen
 
 Chi tiết nhật ký: `docs/notes/TIEN_DO.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
 
-**Tài liệu kiến thức Security (HTML):** mở
-`C:\Users\ADMIN\Desktop\VInSOC\Project_Sentinel_Kien_Thuc_Security.html`
-(hoặc `docs/Project_Sentinel_Security_Guide.html`) trên trình duyệt — diễn giải đủ 12 tuần theo PDF VinUni × VinSOC.
-
 ## An toàn
 
 Mọi fuzz/exploit **chỉ** nhắm `localhost` / dịch vụ Compose. Không tấn công host ngoài.

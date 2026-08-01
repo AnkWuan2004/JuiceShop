@@ -13,7 +13,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TRACE_DIR = ROOT / "data-lake" / "traces"
 OUT = ROOT / "data-lake" / "observability_dashboard.html"
-NOTES = ROOT / "docs" / "notes" / "ARIZE_VIEW.html"
 
 
 def load_records() -> list[dict]:
@@ -96,10 +95,7 @@ def main() -> None:
     html = build_html(rows)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
-    NOTES.parent.mkdir(parents=True, exist_ok=True)
-    NOTES.write_text(html, encoding="utf-8")
     print(f"[+] Dashboard → {OUT}")
-    print(f"[+] Copy → {NOTES}")
 
 
 if __name__ == "__main__":
