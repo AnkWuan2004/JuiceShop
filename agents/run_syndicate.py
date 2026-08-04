@@ -45,7 +45,9 @@ def main() -> None:
     from supervisor import Supervisor
 
     print("[*] Supervisor pipeline (Recon → Fuzz → Exploit)")
-    print("    LLM mode: MOCK" if not __import__("os").environ.get("OPENAI_API_KEY") else "    LLM mode: OpenAI")
+    from common import LLMClient
+
+    print("    LLM mode: " + ("MOCK (offline)" if LLMClient().mock else "DeepSeek V4 Flash"))
     Supervisor().run_pipeline(auto_approve=not args.interactive_hitl)
     print("[*] Done. Xem data-lake/traces/ và syndicate_summary.json")
 

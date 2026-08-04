@@ -45,9 +45,18 @@ Build từ source (chỉ khi sửa `juice-shop/`, VD Tuần 7):
 docker compose -f docker-compose.yml -f docker-compose.from-source.yml up -d --build
 ```
 
-## Python setup & demo offline (MOCK LLM)
+## LLM provider — DeepSeek V4 Flash 0731 (qua OpenRouter)
 
-Không cần `OPENAI_API_KEY` — agents trả JSON deterministic.
+Provider **duy nhất**: DeepSeek V4 Flash qua OpenRouter (OpenAI-compatible). Không dùng OpenAI/Gemini/Anthropic.
+
+```bash
+cp .env.example .env          # rồi dán OpenRouter API key (sk-or-v1-...) vào OPENAI_API_KEY
+# OPENAI_BASE_URL=https://openrouter.ai/api/v1 · OPENAI_MODEL=deepseek/deepseek-v4-flash-0731
+```
+
+Tạo key: https://openrouter.ai/keys · Để trống key → agents chạy **MOCK offline** (không gọi mạng).
+
+## Python setup & demo offline (MOCK LLM)
 
 ```bash
 pip install -r requirements.txt
@@ -78,6 +87,19 @@ python agents/recon_skeleton.py              # nền Attack Surface Map (tuần 
 
 Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agent.
 
+## Tuần 3 — Security Analysis Agent
+
+Đọc findings đã chuẩn hóa → gộp trùng → phân loại severity → giải thích + đề xuất fix → **JSONL**.
+Mỗi finding truy vết `evidence.source_ids` về row DB (evidence-based, không bịa).
+
+Báo cáo: `docs/notes/Week3_Security_Analysis_Agent.md` · Plan: `docs/notes/WEEK3_PLAN.md`
+System Prompt: `agents/prompts/analysis_system_prompt.txt`
+
+```bash
+python agents/analysis_agent.py --md      # → data-lake/analysis_report.jsonl (+ .md)
+python scripts/test_analysis_agent.py     # 3 tình huống: happy / empty / injection
+```
+
 ## Tiến độ (12 tuần)
 
 | Tuần | Nội dung | Trạng thái |
@@ -85,7 +107,7 @@ Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agen
 | 0 | Clone Juice Shop + Compose | ✅ Done |
 | 1 | SAST/DAST CI + parse + Attack Surface + seed reports | ✅ CI verified + demo |
 | 2 | Kong IAM + `test_kong_iam.py` + MCP stub | ✅ Verified demo |
-| 3 | RAG ingest / hybrid / retrieval eval | ✅ P@3+MRR (BOW+BM25) |
+| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 53 findings grounded · 13/13 test |
 | 4 | Recon Agent → Attack Surface Map | ✅ DB-driven + vs manual |
 | 5 | Fuzz Agent qua Kong rate-limit | ✅ Mutate-on-anomaly |
 | 6 | Multi-agent Supervisor + traces | ✅ File traces |

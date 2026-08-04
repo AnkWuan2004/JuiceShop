@@ -15,11 +15,33 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 TRACE_DIR = ROOT / "data-lake" / "traces"
+
+
+def _load_dotenv() -> None:
+    """Nạp .env ở gốc repo (không ghi đè biến đã có trong môi trường). Không phụ thuộc python-dotenv."""
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key, val = key.strip(), val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
+
+
+_load_dotenv()
+
+
+def _is_local_base(url: str) -> bool:
+    return any(h in url for h in ("localhost", "127.0.0.1", "0.0.0.0"))
 KONG_BASE = os.environ.get("SENTINEL_KONG", "http://localhost:8000")
 RECON_KEY = os.environ.get("SENTINEL_RECON_KEY", "recon-key-demo")
 EXPLOIT_KEY = os.environ.get("SENTINEL_EXPLOIT_KEY", "exploit-key-demo")
 
-# Rough OpenAI-ish pricing for estimates (USD per 1M tokens)
+# Ước lượng chi phí (USD / 1M tokens) — chỉnh theo bảng giá DeepSeek V4 Flash qua env
 _COST_IN = float(os.environ.get("SENTINEL_COST_IN_PER_1M", "0.15"))
 _COST_OUT = float(os.environ.get("SENTINEL_COST_OUT_PER_1M", "0.60"))
 
@@ -76,19 +98,24 @@ def est_cost_usd(tokens_in: int, tokens_out: int, *, mock: bool) -> float:
 
 
 class LLMClient:
-    """OpenAI / vLLM OpenAI-compatible nếu có key hoặc OPENAI_BASE_URL; không thì mock."""
+    """LLM provider = DeepSeek (OpenAI-compatible) qua OPENAI_* env. Không key thật → mock offline."""
 
     def __init__(self) -> None:
         self.api_key = os.environ.get("OPENAI_API_KEY", "").strip()
         self.base_url = os.environ.get("OPENAI_BASE_URL", "").strip() or None
-        self.model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-        # Mock khi không có key VÀ không có base_url (vLLM stub vẫn cần key giả)
-        self.mock = not bool(self.api_key) and not bool(self.base_url)
-        if self.base_url and not self.api_key:
+        # Mặc định DeepSeek V4 Flash 0731 qua OpenRouter (không dùng OpenAI/Gemini/Anthropic)
+        self.model = os.environ.get("OPENAI_MODEL", "deepseek/deepseek-v4-flash-0731")
+        # Mock khi không có key thật. Ngoại lệ: base_url localhost (vLLM stub) chấp nhận key giả.
+        self.mock = not bool(self.api_key)
+        # Hook cho test: ép offline dù .env có key thật (deterministic, không gọi mạng).
+        if os.environ.get("SENTINEL_FORCE_MOCK", "").strip() in ("1", "true", "yes"):
+            self.mock = True
+            return
+        if self.base_url and not self.api_key and _is_local_base(self.base_url):
             self.api_key = "stub-key"
             self.mock = False
-        if self.base_url and not os.environ.get("OPENAI_MODEL"):
-            self.model = "sentinel-vllm-stub"
+            if not os.environ.get("OPENAI_MODEL"):
+                self.model = "sentinel-vllm-stub"
 
     def chat(self, system: str, user: str, *, expect_json: bool = True) -> str:
         tin = est_tokens(system) + est_tokens(user)
@@ -136,23 +163,50 @@ class LLMClient:
         return out
 
     def _openai_chat(self, system: str, user: str) -> str:
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        # Ưu tiên SDK openai nếu có; nếu không, gọi REST bằng requests (OpenAI-compatible).
         try:
             from openai import OpenAI  # type: ignore
-        except ImportError as e:
-            raise SystemExit("Cần: pip install openai") from e
-        kwargs = {"api_key": self.api_key}
-        if self.base_url:
-            kwargs["base_url"] = self.base_url
-        client = OpenAI(**kwargs)
-        resp = client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            temperature=0.2,
-        )
-        return resp.choices[0].message.content or ""
+
+            kwargs = {"api_key": self.api_key}
+            if self.base_url:
+                kwargs["base_url"] = self.base_url
+            client = OpenAI(**kwargs)
+            resp = client.chat.completions.create(
+                model=self.model, messages=messages, temperature=0.2
+            )
+            return resp.choices[0].message.content or ""
+        except ImportError:
+            return self._rest_chat(messages)
+
+    def _rest_chat(self, messages: list[dict]) -> str:
+        """REST /chat/completions bằng requests — dùng khi không có package openai (vd OpenRouter).
+        Timeout dài (model chậm) + retry vài lần cho lỗi mạng transient."""
+        import requests  # type: ignore
+
+        base = (self.base_url or "https://api.openai.com/v1").rstrip("/")
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", "180"))
+        retries = int(os.environ.get("SENTINEL_LLM_RETRIES", "3"))
+        last_err: Exception | None = None
+        for attempt in range(retries):
+            try:
+                resp = requests.post(
+                    f"{base}/chat/completions",
+                    headers=headers,
+                    json={"model": self.model, "messages": messages, "temperature": 0.2},
+                    timeout=timeout,
+                )
+                resp.raise_for_status()
+                return resp.json()["choices"][0]["message"]["content"] or ""
+            except requests.exceptions.RequestException as e:  # timeout / conn / 5xx
+                last_err = e
+                if attempt < retries - 1:
+                    time.sleep(2 * (attempt + 1))
+        raise last_err  # type: ignore[misc]
 
     def _mock_response(self, system: str, user: str) -> str:
         """Phản hồi JSON deterministic; recon merge DB map nếu có trong user."""
@@ -265,6 +319,28 @@ class LLMClient:
                     ],
                 },
                 indent=2,
+            )
+
+        # Tuần 3 — Security Analysis Agent: điền explanation + remediation, grounded trên RAG
+        if "security analysis agent" in blob or ("explanation" in blob and "remediation" in blob and "finding" in blob):
+            name = "the finding"
+            rag = ""
+            try:
+                u = json.loads(user) if user.strip().startswith("{") else {}
+                name = str(u.get("name") or name)
+                ctx = u.get("rag_context") or []
+                rag = (ctx[0] if ctx else "")[:220]
+            except Exception:
+                pass
+            expl = (f"{name}. {rag}").strip() or f"{name} is a security weakness reported by the scanner."
+            return json.dumps(
+                {
+                    "mock": True,
+                    "explanation": expl,
+                    "remediation": "Apply OWASP guidance for this vulnerability class: validate/encode input, "
+                    "use parameterized queries, enforce least privilege, and add a regression test.",
+                },
+                ensure_ascii=False,
             )
 
         if "judge" in blob or "evaluate" in blob or "verdict" in blob:
