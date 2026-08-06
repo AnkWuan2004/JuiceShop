@@ -1,0 +1,698 @@
+{
+  "nodes": [
+    {
+      "id": "doc:cve_log4shell",
+      "type": "document",
+      "label": "cve_log4shell"
+    },
+    {
+      "id": "cve:cve-2021-44228",
+      "type": "cve",
+      "label": "CVE-2021-44228"
+    },
+    {
+      "id": "topic:rce",
+      "type": "topic",
+      "label": "rce"
+    },
+    {
+      "id": "topic:juice",
+      "type": "topic",
+      "label": "juice"
+    },
+    {
+      "id": "doc:cve_sqli_rce",
+      "type": "document",
+      "label": "cve_sqli_rce"
+    },
+    {
+      "id": "cve:cve-2019-9193",
+      "type": "cve",
+      "label": "CVE-2019-9193"
+    },
+    {
+      "id": "endpoint:/rest/products/search?q=",
+      "type": "endpoint",
+      "label": "/rest/products/search?q="
+    },
+    {
+      "id": "topic:sqli",
+      "type": "topic",
+      "label": "sqli"
+    },
+    {
+      "id": "doc:cve_struts",
+      "type": "document",
+      "label": "cve_struts"
+    },
+    {
+      "id": "cve:cve-2017-5638",
+      "type": "cve",
+      "label": "CVE-2017-5638"
+    },
+    {
+      "id": "doc:owasp_auth_cheatsheet",
+      "type": "document",
+      "label": "owasp_auth_cheatsheet"
+    },
+    {
+      "id": "topic:auth",
+      "type": "topic",
+      "label": "auth"
+    },
+    {
+      "id": "doc:owasp_sqli_cheatsheet",
+      "type": "document",
+      "label": "owasp_sqli_cheatsheet"
+    },
+    {
+      "id": "endpoint:/rest/products/search",
+      "type": "endpoint",
+      "label": "/rest/products/search"
+    },
+    {
+      "id": "doc:owasp_top10_2021",
+      "type": "document",
+      "label": "owasp_top10_2021"
+    },
+    {
+      "id": "endpoint:/rest/admin",
+      "type": "endpoint",
+      "label": "/rest/admin"
+    },
+    {
+      "id": "endpoint:/rest/user/login",
+      "type": "endpoint",
+      "label": "/rest/user/login"
+    },
+    {
+      "id": "topic:xss",
+      "type": "topic",
+      "label": "xss"
+    },
+    {
+      "id": "doc:owasp_xss_cheatsheet",
+      "type": "document",
+      "label": "owasp_xss_cheatsheet"
+    },
+    {
+      "id": "doc:pentest_juice_access",
+      "type": "document",
+      "label": "pentest_juice_access"
+    },
+    {
+      "id": "endpoint:/api/Users",
+      "type": "endpoint",
+      "label": "/api/Users"
+    },
+    {
+      "id": "doc:pentest_juice_sqli",
+      "type": "document",
+      "label": "pentest_juice_sqli"
+    },
+    {
+      "id": "doc:pentest_juice_xss",
+      "type": "document",
+      "label": "pentest_juice_xss"
+    },
+    {
+      "id": "endpoint:/api/Feedbacks",
+      "type": "endpoint",
+      "label": "/api/Feedbacks"
+    },
+    {
+      "id": "doc:tool_semgrep",
+      "type": "document",
+      "label": "tool_semgrep"
+    },
+    {
+      "id": "doc:tool_zap",
+      "type": "document",
+      "label": "tool_zap"
+    },
+    {
+      "id": "doc:vuln_broken_auth_jwt",
+      "type": "document",
+      "label": "vuln_broken_auth_jwt"
+    },
+    {
+      "id": "cwe:cwe-287",
+      "type": "cwe",
+      "label": "CWE-287"
+    },
+    {
+      "id": "doc:vuln_command_injection",
+      "type": "document",
+      "label": "vuln_command_injection"
+    },
+    {
+      "id": "cwe:cwe-78",
+      "type": "cwe",
+      "label": "CWE-78"
+    },
+    {
+      "id": "cwe:cwe-94",
+      "type": "cwe",
+      "label": "CWE-94"
+    },
+    {
+      "id": "doc:vuln_csrf",
+      "type": "document",
+      "label": "vuln_csrf"
+    },
+    {
+      "id": "cwe:cwe-352",
+      "type": "cwe",
+      "label": "CWE-352"
+    },
+    {
+      "id": "doc:vuln_idor_basket",
+      "type": "document",
+      "label": "vuln_idor_basket"
+    },
+    {
+      "id": "cwe:cwe-639",
+      "type": "cwe",
+      "label": "CWE-639"
+    },
+    {
+      "id": "endpoint:/rest/basket/1",
+      "type": "endpoint",
+      "label": "/rest/basket/1"
+    },
+    {
+      "id": "endpoint:/rest/basket/{id}",
+      "type": "endpoint",
+      "label": "/rest/basket/{id}"
+    },
+    {
+      "id": "endpoint:/rest/basket/2",
+      "type": "endpoint",
+      "label": "/rest/basket/2"
+    },
+    {
+      "id": "doc:vuln_path_traversal",
+      "type": "document",
+      "label": "vuln_path_traversal"
+    },
+    {
+      "id": "cwe:cwe-22",
+      "type": "cwe",
+      "label": "CWE-22"
+    },
+    {
+      "id": "endpoint:/ftp/../",
+      "type": "endpoint",
+      "label": "/ftp/../"
+    },
+    {
+      "id": "endpoint:/ftp/package.json.bak%2500.md",
+      "type": "endpoint",
+      "label": "/ftp/package.json.bak%2500.md"
+    },
+    {
+      "id": "doc:vuln_security_misconfig",
+      "type": "document",
+      "label": "vuln_security_misconfig"
+    },
+    {
+      "id": "cwe:cwe-16",
+      "type": "cwe",
+      "label": "CWE-16"
+    },
+    {
+      "id": "cwe:cwe-209",
+      "type": "cwe",
+      "label": "CWE-209"
+    },
+    {
+      "id": "endpoint:/rest/admin/application-version",
+      "type": "endpoint",
+      "label": "/rest/admin/application-version"
+    },
+    {
+      "id": "doc:vuln_sensitive_data_exposure",
+      "type": "document",
+      "label": "vuln_sensitive_data_exposure"
+    },
+    {
+      "id": "cwe:cwe-311",
+      "type": "cwe",
+      "label": "CWE-311"
+    },
+    {
+      "id": "cwe:cwe-916",
+      "type": "cwe",
+      "label": "CWE-916"
+    },
+    {
+      "id": "doc:vuln_ssrf",
+      "type": "document",
+      "label": "vuln_ssrf"
+    },
+    {
+      "id": "cwe:cwe-918",
+      "type": "cwe",
+      "label": "CWE-918"
+    }
+  ],
+  "edges": [
+    {
+      "from": "doc:cve_log4shell",
+      "to": "cve:cve-2021-44228",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:cve_log4shell",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:cve_log4shell",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "cve:cve-2021-44228",
+      "to": "topic:rce",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2021-44228",
+      "to": "topic:juice",
+      "rel": "related"
+    },
+    {
+      "from": "doc:cve_sqli_rce",
+      "to": "cve:cve-2019-9193",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:cve_sqli_rce",
+      "to": "endpoint:/rest/products/search?q=",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:cve_sqli_rce",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:cve_sqli_rce",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:cve_sqli_rce",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "cve:cve-2019-9193",
+      "to": "topic:sqli",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2019-9193",
+      "to": "topic:rce",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2019-9193",
+      "to": "topic:juice",
+      "rel": "related"
+    },
+    {
+      "from": "doc:cve_struts",
+      "to": "cve:cve-2017-5638",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:cve_struts",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:cve_struts",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "cve:cve-2017-5638",
+      "to": "topic:rce",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2017-5638",
+      "to": "topic:juice",
+      "rel": "related"
+    },
+    {
+      "from": "doc:owasp_auth_cheatsheet",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_auth_cheatsheet",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_sqli_cheatsheet",
+      "to": "endpoint:/rest/products/search",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:owasp_sqli_cheatsheet",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_sqli_cheatsheet",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "cve:cve-2021-44228",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "cve:cve-2017-5638",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "endpoint:/rest/admin",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "endpoint:/rest/products/search",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "endpoint:/rest/user/login",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "topic:xss",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_top10_2021",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "cve:cve-2021-44228",
+      "to": "topic:sqli",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2021-44228",
+      "to": "topic:xss",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2021-44228",
+      "to": "topic:auth",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2017-5638",
+      "to": "topic:sqli",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2017-5638",
+      "to": "topic:xss",
+      "rel": "related"
+    },
+    {
+      "from": "cve:cve-2017-5638",
+      "to": "topic:auth",
+      "rel": "related"
+    },
+    {
+      "from": "doc:owasp_xss_cheatsheet",
+      "to": "topic:xss",
+      "rel": "about"
+    },
+    {
+      "from": "doc:owasp_xss_cheatsheet",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_access",
+      "to": "endpoint:/api/Users",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:pentest_juice_access",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_access",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_sqli",
+      "to": "endpoint:/rest/products/search?q=",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:pentest_juice_sqli",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_sqli",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_xss",
+      "to": "endpoint:/api/Feedbacks",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:pentest_juice_xss",
+      "to": "topic:xss",
+      "rel": "about"
+    },
+    {
+      "from": "doc:pentest_juice_xss",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:tool_semgrep",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:tool_semgrep",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:tool_semgrep",
+      "to": "topic:juice",
+      "rel": "about"
+    },
+    {
+      "from": "doc:tool_zap",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:tool_zap",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_broken_auth_jwt",
+      "to": "cwe:cwe-287",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_broken_auth_jwt",
+      "to": "endpoint:/rest/user/login",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_broken_auth_jwt",
+      "to": "topic:sqli",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_broken_auth_jwt",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_broken_auth_jwt",
+      "to": "topic:rce",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_command_injection",
+      "to": "cwe:cwe-78",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_command_injection",
+      "to": "cwe:cwe-94",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_command_injection",
+      "to": "endpoint:/api/Feedbacks",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_csrf",
+      "to": "cwe:cwe-352",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_csrf",
+      "to": "endpoint:/api/Users",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_csrf",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_idor_basket",
+      "to": "cwe:cwe-639",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_idor_basket",
+      "to": "endpoint:/rest/basket/1",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_idor_basket",
+      "to": "endpoint:/rest/basket/{id}",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_idor_basket",
+      "to": "endpoint:/rest/basket/2",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_idor_basket",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_path_traversal",
+      "to": "cwe:cwe-22",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_path_traversal",
+      "to": "endpoint:/ftp/../",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_path_traversal",
+      "to": "endpoint:/ftp/package.json.bak%2500.md",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_path_traversal",
+      "to": "topic:auth",
+      "rel": "about"
+    },
+    {
+      "from": "doc:vuln_security_misconfig",
+      "to": "cwe:cwe-16",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_security_misconfig",
+      "to": "cwe:cwe-209",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_security_misconfig",
+      "to": "endpoint:/rest/admin/application-version",
+      "rel": "covers"
+    },
+    {
+      "from": "doc:vuln_sensitive_data_exposure",
+      "to": "cwe:cwe-311",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_sensitive_data_exposure",
+      "to": "cwe:cwe-916",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_ssrf",
+      "to": "cwe:cwe-918",
+      "rel": "mentions"
+    },
+    {
+      "from": "doc:vuln_ssrf",
+      "to": "endpoint:/api/Users",
+      "rel": "covers"
+    }
+  ],
+  "doc_ids": [
+    "cve_log4shell",
+    "cve_sqli_rce",
+    "cve_struts",
+    "owasp_auth_cheatsheet",
+    "owasp_sqli_cheatsheet",
+    "owasp_top10_2021",
+    "owasp_xss_cheatsheet",
+    "pentest_juice_access",
+    "pentest_juice_sqli",
+    "pentest_juice_xss",
+    "tool_semgrep",
+    "tool_zap",
+    "vuln_broken_auth_jwt",
+    "vuln_command_injection",
+    "vuln_csrf",
+    "vuln_idor_basket",
+    "vuln_path_traversal",
+    "vuln_security_misconfig",
+    "vuln_sensitive_data_exposure",
+    "vuln_ssrf"
+  ],
+  "stats": {
+    "nodes": 51,
+    "edges": 82,
+    "docs": 20
+  }
+}

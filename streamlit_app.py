@@ -91,8 +91,10 @@ def _rag_search_fn():
 def live_search(question: str, k: int = 3) -> list[dict]:
     try:
         return _rag_search_fn()(question, k=k)
-    except Exception as e:
-        st.error(f"RAG search lỗi: {e}")
+    except (Exception, SystemExit) as e:
+        # rag/query.py::load_index() raise SystemExit (không phải Exception) khi thiếu
+        # rag/store/ — phải bắt riêng, nếu không cả app Streamlit sẽ dừng câm lặng.
+        st.error(f"RAG search lỗi (đã ingest chưa? `python rag/ingest.py`): {e}")
         return []
 
 
@@ -189,7 +191,7 @@ with tab2:
     st.markdown("**Dữ liệu đã nạp vào `vuln_data.db`:**")
     rows = db_rows(limit=200)
     if rows:
-        st.dataframe(rows, use_container_width=True, height=300)
+        st.dataframe(rows, width="stretch", height=300)
     else:
         st.info("DB rỗng — chạy `python scripts/seed_sample_reports.py` hoặc nạp scan thật bằng `parse_results.py`.")
 
@@ -250,7 +252,7 @@ with tab4:
                     f"medium={meta['by_severity']['medium']} low={meta['by_severity']['low']}) · "
                     f"llm={'mock' if meta['llm_mock'] else 'REAL'} · dropped_no_evidence={meta['dropped_no_evidence']}"
                 )
-            except Exception as e:
+            except (Exception, SystemExit) as e:
                 st.error(f"Agent lỗi: {e}")
 
     findings, empty_status = load_report_findings()

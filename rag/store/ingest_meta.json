@@ -1,0 +1,31 @@
+{
+  "count": 20,
+  "backend": "bow",
+  "ids": [
+    "cve_log4shell",
+    "cve_sqli_rce",
+    "cve_struts",
+    "owasp_auth_cheatsheet",
+    "owasp_sqli_cheatsheet",
+    "owasp_top10_2021",
+    "owasp_xss_cheatsheet",
+    "pentest_juice_access",
+    "pentest_juice_sqli",
+    "pentest_juice_xss",
+    "tool_semgrep",
+    "tool_zap",
+    "vuln_broken_auth_jwt",
+    "vuln_command_injection",
+    "vuln_csrf",
+    "vuln_idor_basket",
+    "vuln_path_traversal",
+    "vuln_security_misconfig",
+    "vuln_sensitive_data_exposure",
+    "vuln_ssrf"
+  ],
+  "graphrag": {
+    "nodes": 51,
+    "edges": 82,
+    "docs": 20
+  }
+}
