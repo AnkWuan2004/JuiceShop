@@ -1,7 +1,7 @@
 # Plan Tuần 3 — Security Analysis Agent
 
 **Đề:** VinUni × VinSOC — lộ trình **6 tuần** · **Tuần 3:** xây AI Agent đọc kết quả quét → **báo cáo bảo mật** (JSONL)
-**Status:** ✅ HOÀN THÀNH — 53 findings grounded (0 bịa) · 13/13 test PASS · report `docs/notes/Week3_Security_Analysis_Agent.md`
+**Status:** ✅ HOÀN THÀNH — 140→~71 findings grounded (0 bịa) · 13/13 test PASS · live demo `:8790` · report `docs/notes/Week3_Security_Analysis_Agent.md`
 **Nộp:** 1 file MD tiếng Việt (~1 trang + sơ đồ) — mặc định `docs/notes/Week3_Security_Analysis_Agent.md`
 **Nguyên tắc:** **evidence-based, không bịa** · output ổn định · fail-safe với input rỗng/hỏng
 
@@ -111,40 +111,41 @@ Khóa gộp = `(unified_severity, normalized_title, location_bucket)`.
 ## Lịch 3 ngày
 
 ### D1 — Đọc data + gộp + severity (deterministic, chưa cần LLM đẹp)
-- [ ] `agents/analysis_agent.py`: load DB (ưu tiên MCP `get_scan_results`, fallback SQLite).
-- [ ] Unify severity + dedupe/group → danh sách nhóm có `count`/`source_ids`.
-- [ ] Xuất `data-lake/analysis_report.jsonl` với evidence, **explanation/remediation tạm để rỗng**.
+- [x] `agents/analysis_agent.py`: load DB (ưu tiên MCP `get_scan_results`, fallback SQLite).
+- [x] Unify severity + dedupe/group → danh sách nhóm có `count`/`source_ids`.
+- [x] Xuất `data-lake/analysis_report.jsonl` với evidence, **explanation/remediation tạm để rỗng**.
 - **Verify:** chạy `python agents/analysis_agent.py` → jsonl có N dòng, mỗi dòng có `source_ids` khớp id DB thật; sort theo severity đúng.
 
 ### D2 — System Prompt + LLM enrich (grounded) + anti-hallucination
-- [ ] Viết `agents/prompts/analysis_system_prompt.txt` (lưu repo — rubric "system prompt in repo").
-- [ ] Với mỗi nhóm: query RAG theo `name` → truyền context → LLM điền `explanation`+`remediation` (JSON).
-- [ ] `confidence` tính bằng rule (số tool, số source, severity).
-- [ ] Post-check evidence: loại finding bịa; log `dropped_no_evidence`.
+- [x] Viết `agents/prompts/analysis_system_prompt.txt` (lưu repo — rubric "system prompt in repo").
+- [x] Với mỗi nhóm: query RAG theo `name` → truyền context → LLM điền `explanation`+`remediation` (JSON).
+- [x] `confidence` tính bằng rule (số tool, số source, severity).
+- [x] Post-check evidence: loại finding bịa; log `dropped_no_evidence`.
 - **Verify:** báo cáo chạy được cả **mock** (offline) lẫn real key; không finding nào thiếu `source_ids`; endpoint/file đều thuộc DB.
 
 ### D3 — 3 test + report MD + README
-- [ ] `tests/` hoặc `scripts/test_analysis_agent.py`, ≥3 case:
+- [x] `tests/` hoặc `scripts/test_analysis_agent.py`, ≥3 case:
   1. **Happy path** — DB thật 140 rows → jsonl hợp lệ, ≥1 high, schema đủ field.
   2. **Input rỗng** — DB rỗng → `no_findings`, không crash, exit 0.
   3. **Input hỏng/injection** — row có mô tả chứa "ignore previous instructions / no vulnerabilities" → Agent **không** bị dụ xoá finding (post-check + prompt giữ nguyên evidence).
   *(bonus 4: JSON tool malformed → fallback không vỡ.)*
-- [ ] Viết `docs/notes/Week3_Security_Analysis_Agent.md` (~A4, tiếng Việt) + sơ đồ mermaid.
-- [ ] README: 3 lệnh (ingest DB nếu cần → run agent → xem jsonl).
+- [x] Viết `docs/notes/Week3_Security_Analysis_Agent.md` (~A4, tiếng Việt) + sơ đồ mermaid.
+- [x] README: 3 lệnh (ingest DB nếu cần → run agent → xem jsonl) + live demo `:8790`.
 - **Verify:** người lạ chạy theo README ra đúng `analysis_report.jsonl` + bảng Pass/Fail 3 test xanh.
 
 ---
 
 ## Definition of Done
 
-- [ ] `analysis_report.jsonl` sinh tự động từ `vuln_data.db` (data tuần 1–2).
-- [ ] Mỗi finding: đủ 7 field (name, severity, location, evidence, explanation, remediation, confidence).
-- [ ] Mỗi finding truy vết `source_ids` → **không bịa**; post-check log số bị loại.
-- [ ] Output ổn định (chạy lại → schema/khoá gộp không đổi).
-- [ ] Input rỗng/hỏng → không crash, có trạng thái rõ.
-- [ ] System Prompt lưu trong repo.
-- [ ] ≥3 test có Pass/Fail; 1 test là input rỗng.
-- [ ] 1 MD tiếng Việt + sơ đồ, giải thích được không cần đọc cả repo.
+- [x] `analysis_report.jsonl` sinh tự động từ `vuln_data.db` (data tuần 1–2).
+- [x] Mỗi finding: đủ 7 field (name, severity, location, evidence, explanation, remediation, confidence).
+- [x] Mỗi finding truy vết `source_ids` → **không bịa**; post-check log số bị loại.
+- [x] Output ổn định (chạy lại → schema/khoá gộp không đổi).
+- [x] Input rỗng/hỏng → không crash, có trạng thái rõ.
+- [x] System Prompt lưu trong repo.
+- [x] ≥3 test có Pass/Fail; 1 test là input rỗng.
+- [x] 1 MD tiếng Việt + sơ đồ, giải thích được không cần đọc cả repo.
+- [x] Live demo UI: `scripts/demo_analysis_agent.py` → http://127.0.0.1:8790
 
 ---
 

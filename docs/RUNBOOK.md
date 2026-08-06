@@ -27,15 +27,24 @@ docker compose -f docker-compose.yml -f docker-compose.vllm.yml --profile vllm u
 - Agent gateway: http://localhost:8000 (header `apikey`)
 - vLLM stub: http://localhost:8090/v1
 - Slack HITL UI: http://localhost:8787
+- Analysis Agent live demo: http://localhost:8790
 - MCP: http://127.0.0.1:8765/mcp
 
 ## Seed & RAG (+ GraphRAG)
 
 ```bash
 pip install -r requirements.txt
-python scripts/seed_sample_reports.py
+python scripts/seed_sample_reports.py   # 140 rows → vuln_data.db
 python rag/ingest.py
 python rag/evaluate_retrieval.py
+```
+
+## Security Analysis Agent (Tuần 3)
+
+```bash
+python agents/analysis_agent.py --md
+python scripts/test_analysis_agent.py
+python scripts/demo_analysis_agent.py   # UI http://127.0.0.1:8790
 ```
 
 ## Agents (MOCK nếu không có OPENAI_API_KEY / OPENAI_BASE_URL)

@@ -31,6 +31,18 @@ python rag/evaluate_retrieval.py
 
 Kỳ vọng: hybrid / hybrid_graphrag accuracy cao; P@3 / MRR trong `rag/store/retrieval_eval.json` (có key `hybrid_graphrag`).
 
+## 2b. Security Analysis Agent — live demo (Tuần 3)
+
+```bash
+python scripts/demo_analysis_agent.py
+# UI: http://127.0.0.1:8790
+# Nút “Chạy Agent” → gộp trùng + severity + explanation/remediation → JSONL
+python scripts/test_analysis_agent.py   # happy / empty / injection
+```
+
+Artifacts: `data-lake/vuln_data.db`, `data-lake/analysis_report.jsonl` (+ `.md`),
+System Prompt: `agents/prompts/analysis_system_prompt.txt`.
+
 ## 3. MCP + Syndicate E2E
 
 ```bash
@@ -70,9 +82,10 @@ python scripts/test_kong_rate_limit.py
 
 ## 6. Nói với người xem (30s)
 
-1. CI Semgrep+ZAP trên GitHub Actions.  
-2. Kong tách recon (GET) / exploit (POST+RL); MCP tools + A2A.  
-3. GraphRAG + hybrid; agents MOCK + NeMo-style guardrail FTP + Slack HITL + PII.  
-4. LangSmith spans / Arize dashboard; Eval baseline→improved; FinOps + monitor; vLLM gateway stub.
+1. CI Semgrep+ZAP trên GitHub Actions → parse vào `vuln_data.db`.  
+2. **Analysis Agent** (UI :8790): gộp trùng, severity, giải thích + fix, mọi finding có `source_ids`.  
+3. Kong tách recon (GET) / exploit (POST+RL); MCP tools + A2A.  
+4. GraphRAG + hybrid; agents MOCK + NeMo-style guardrail FTP + Slack HITL + PII.  
+5. LangSmith spans / Arize dashboard; Eval baseline→improved; FinOps + monitor; vLLM gateway stub.
 
 Keys demo: `recon-key-demo`, `exploit-key-demo`.

@@ -96,8 +96,14 @@ Báo cáo: `docs/notes/Week3_Security_Analysis_Agent.md` · Plan: `docs/notes/WE
 System Prompt: `agents/prompts/analysis_system_prompt.txt`
 
 ```bash
+python scripts/seed_sample_reports.py     # ~140 rows (111 Semgrep + 29 ZAP) → vuln_data.db
+python rag/ingest.py                      # kho tri thức tuần 2 (nếu chưa ingest)
 python agents/analysis_agent.py --md      # → data-lake/analysis_report.jsonl (+ .md)
 python scripts/test_analysis_agent.py     # 3 tình huống: happy / empty / injection
+
+# Live demo UI (MOCK, không cần API key)
+python scripts/demo_analysis_agent.py     # seed → analyze → http://127.0.0.1:8790
+# hoặc: python scripts/demo_analysis_server.py
 ```
 
 ## Tiến độ (12 tuần)
@@ -107,7 +113,7 @@ python scripts/test_analysis_agent.py     # 3 tình huống: happy / empty / inj
 | 0 | Clone Juice Shop + Compose | ✅ Done |
 | 1 | SAST/DAST CI + parse + Attack Surface + seed reports | ✅ CI verified + demo |
 | 2 | Kong IAM + `test_kong_iam.py` + MCP stub | ✅ Verified demo |
-| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 53 findings grounded · 13/13 test |
+| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 140→~71 grounded · live demo :8790 · 13/13 test |
 | 4 | Recon Agent → Attack Surface Map | ✅ DB-driven + vs manual |
 | 5 | Fuzz Agent qua Kong rate-limit | ✅ Mutate-on-anomaly |
 | 6 | Multi-agent Supervisor + traces | ✅ File traces |

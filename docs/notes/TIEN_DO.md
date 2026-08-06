@@ -29,12 +29,13 @@ Cập nhật: 2026-07-20 (PDF gaps closed)
 | MCP JSON-RPC | ✅ | `agents/mcp_server.py` — tools/list + tools/call |
 | A2A envelopes | ✅ | `agents/a2a.py` → `data-lake/a2a_messages.jsonl` |
 
-### Tuần 3 — RAG + GraphRAG
+### Tuần 3 — RAG + GraphRAG + Security Analysis Agent
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | ingest / hybrid BOW+BM25 | ✅ | Recon dùng `hybrid_search` |
 | GraphRAG | ✅ | `rag/graphrag.py` → `knowledge_graph.json` |
 | Eval accuracy + P@3 + MRR | ✅ | modes: bow / hybrid / **hybrid_graphrag** |
+| Security Analysis Agent → JSONL | ✅ | `agents/analysis_agent.py` · live demo `:8790` · 13/13 test |
 
 ### Tuần 4–6 — Agents + Observability
 | Hạng mục | Trạng thái | Ghi chú |

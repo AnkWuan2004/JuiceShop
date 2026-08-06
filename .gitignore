@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
 
 # Python
 __pycache__/
@@ -14,12 +15,16 @@ data-lake/*.db
 data-lake/*.sqlite
 data-lake/reports/*.json
 !data-lake/reports/.gitkeep
+# Demo snapshot committed on purpose — mentor cần xem dữ liệu thật khi mở repo/Streamlit Cloud
+!data-lake/vuln_data.db
+!data-lake/reports/semgrep-report.json
 
 # Scan artifacts (local)
 semgrep-report.json
 zap-report.json
 zap.yaml
 *.log
+!data-lake/reports/semgrep-report.json
 
 # Juice Shop (local installs / build)
 juice-shop/node_modules/
