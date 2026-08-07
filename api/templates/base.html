@@ -4,69 +4,83 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project Sentinel — AI Security Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% import "_icons.html" as icons %}
 <style>
   html { font-size: 18px; }
   :root {
     color-scheme: light;
-    --sn-bg: #f9f9f7;
-    --sn-surface: #fcfcfb;
-    --sn-ink: #0b0b0b;
-    --sn-ink-2: #52514e;
-    --sn-muted: #6f6e69;
-    --sn-grid: #e1e0d9;
-    --sn-baseline: #c3c2b7;
-    --sn-border: rgba(11,11,11,0.12);
-    --sn-good: #0ca30c;
-    --sn-warning: #c98500;
-    --sn-serious: #d9663a;
-    --sn-critical: #d03b3b;
-    --sn-series-1: #2a78d6;
-    --sn-series-2: #eb6834;
-    --sn-series-3: #1baf7a;
-    --sn-series-4: #a97a00;
+    /* Data-Dense Dashboard palette — security/ops product (blue + amber, WCAG AA) */
+    --sn-bg: #f8fafc;
+    --sn-surface: #ffffff;
+    --sn-ink: #1e3a8a;
+    --sn-ink-2: #475569;
+    --sn-muted: #64748b;
+    --sn-grid: #e9eef6;
+    --sn-baseline: #cbd5e1;
+    --sn-border: #dbeafe;
+    --sn-primary: #1e40af;
+    --sn-secondary: #3b82f6;
+    --sn-accent: #d97706;
+    --sn-good: #16a34a;
+    --sn-warning: #d97706;
+    --sn-serious: #ea580c;
+    --sn-critical: #dc2626;
+    --sn-series-1: #1e40af;
+    --sn-series-2: #d97706;
+    --sn-series-3: #0891b2;
+    --sn-series-4: #7c3aed;
+    --sn-ring: #1e40af;
   }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; background:var(--sn-bg); color:var(--sn-ink); font-size:1rem; line-height:1.5; }
-  h1, h2, h3 { line-height:1.25; }
+  body { font-family: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; background:var(--sn-bg); color:var(--sn-ink-2); font-size:1rem; line-height:1.5; }
+  h1, h2, h3 { line-height:1.25; color:var(--sn-ink); font-weight:700; }
   h2 { font-size:1.7rem; margin:.3rem 0 1rem; }
   h3 { font-size:1.25rem; }
-  header { padding: 1.5rem clamp(1.25rem, 4vw, 3rem); border-bottom: 1px solid var(--sn-grid); background:var(--sn-surface); }
-  header h1 { margin:0; font-size:2rem; }
-  header p { margin:.35rem 0 0; color:var(--sn-ink-2); font-size:1.05rem; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--sn-ring); outline-offset: 2px;
+  }
+  header { padding: 1.5rem clamp(1.25rem, 4vw, 3rem); border-bottom: 1px solid var(--sn-grid); background:var(--sn-surface); display:flex; align-items:center; gap:.9rem; }
+  header .brand-text h1 { margin:0; font-size:1.7rem; }
+  header .brand-text p { margin:.3rem 0 0; color:var(--sn-ink-2); font-size:1.02rem; }
   nav { display:flex; gap:.25rem; padding: 0 clamp(1.25rem, 4vw, 3rem); border-bottom:1px solid var(--sn-grid); overflow-x:auto; background:var(--sn-surface); }
-  nav a { color:var(--sn-ink-2); text-decoration:none; padding:.9rem 1.15rem; border-bottom:3px solid transparent; white-space:nowrap; font-size:1.05rem; font-weight:500; }
-  nav a.active, nav a:hover { color:var(--sn-ink); border-bottom-color:var(--sn-series-1); }
+  nav a { color:var(--sn-ink-2); text-decoration:none; padding:.9rem 1.15rem; border-bottom:3px solid transparent; white-space:nowrap; font-size:1.05rem; font-weight:500; transition: color .18s ease, border-color .18s ease; }
+  nav a.active, nav a:hover { color:var(--sn-primary); border-bottom-color:var(--sn-primary); }
   main { padding: 2rem clamp(1.25rem, 4vw, 3rem) 4rem; width: min(1680px, 100%); margin: 0 auto; }
-  .status-bar { display:flex; flex-wrap:wrap; gap:1.5rem; font-size:1rem; color:var(--sn-ink-2); padding:.7rem clamp(1.25rem, 4vw, 3rem); background:var(--sn-surface); border-bottom:1px solid var(--sn-grid); }
+  .status-bar { display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center; font-size:1rem; color:var(--sn-ink-2); padding:.7rem clamp(1.25rem, 4vw, 3rem); background:var(--sn-surface); border-bottom:1px solid var(--sn-grid); }
   table { border-collapse: collapse; width:100%; font-size:.95rem; display:block; overflow-x:auto; }
   th, td { border-bottom:1px solid var(--sn-grid); padding:.55rem .7rem; text-align:left; }
-  code, pre { background:var(--sn-grid); padding:.15rem .45rem; border-radius:4px; word-break:break-word; }
-  pre { padding:.9rem; overflow-x:auto; white-space:pre-wrap; font-size:.9rem; }
+  code, pre { font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--sn-grid); color:var(--sn-ink); padding:.15rem .45rem; border-radius:4px; word-break:break-word; }
+  pre { padding:.9rem; overflow-x:auto; white-space:pre-wrap; font-size:.88rem; }
   .card { background:var(--sn-surface); border:1px solid var(--sn-border); border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; }
-  .check-line { margin:.5rem 0; font-size:1.02rem; }
-  .sev-high { color:var(--sn-critical); } .sev-medium { color:var(--sn-warning); } .sev-low { color:var(--sn-good); }
+  .check-line { margin:.5rem 0; font-size:1.02rem; color:var(--sn-ink-2); }
+  .sev-high { color:var(--sn-critical); font-weight:600; } .sev-medium { color:var(--sn-warning); font-weight:600; } .sev-low { color:var(--sn-good); font-weight:600; }
   form.inline { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin:1rem 0; }
   input[type=text], input[type=number], select { background:var(--sn-surface); border:1px solid var(--sn-baseline); color:var(--sn-ink); padding:.5rem .7rem; border-radius:8px; font-size:1rem; }
-  input[type=range] { accent-color: var(--sn-series-1); vertical-align: middle; }
-  button { background:var(--sn-series-1); color:#fff; border:none; padding:.6rem 1.3rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; }
-  button:hover { filter:brightness(1.1); }
+  input[type=range] { accent-color: var(--sn-primary); vertical-align: middle; cursor:pointer; }
+  button, .tabs a, nav a, summary { cursor: pointer; }
+  button { background:var(--sn-accent); color:#fff; border:none; padding:.6rem 1.3rem; border-radius:8px; font-weight:600; font-size:1rem; transition: filter .18s ease, transform .05s ease; }
+  button:hover { filter:brightness(1.08); }
+  button:active { transform: translateY(1px); }
   button.secondary { background:transparent; border:1px solid var(--sn-baseline); color:var(--sn-ink); }
-  a { color:var(--sn-series-1); }
+  a { color:var(--sn-primary); }
   details { margin:.6rem 0; }
-  details summary { cursor:pointer; font-size:1.02rem; }
+  details summary { font-size:1.02rem; }
   .row { display:flex; gap:1.5rem; flex-wrap:wrap; }
   .row > div { flex:1; min-width:320px; }
   .tile-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin:1.25rem 0 1.75rem; }
   .stat-tile { background:var(--sn-surface); border:1px solid var(--sn-border); border-radius:12px; padding:1.25rem 1.4rem; }
-  .stat-value { font-size:2.1rem; font-weight:700; font-variant-numeric: tabular-nums; }
+  .stat-value { font-size:2.1rem; font-weight:700; font-variant-numeric: tabular-nums; color:var(--sn-ink); }
   .stat-label { color:var(--sn-ink-2); font-size:.95rem; margin-top:.2rem; }
   .stat-hint { color:var(--sn-muted); font-size:.85rem; margin-top:.35rem; }
   .chart-svg text { font-family: inherit; }
   .chart-empty { color:var(--sn-muted); font-size:.95rem; }
   .cap-group h3 { font-size:1rem; color:var(--sn-ink-2); margin:1.5rem 0 .6rem; text-transform:uppercase; letter-spacing:.04em; }
   .tabs { display:flex; gap:.5rem; margin-bottom:.9rem; }
-  .tabs a { padding:.55rem 1.2rem; border-radius:999px; background:var(--sn-surface); border:1px solid var(--sn-border); color:var(--sn-ink-2); text-decoration:none; font-size:1rem; font-weight:600; }
-  .tabs a.active { background:var(--sn-series-1); color:#fff; border-color:transparent; }
+  .tabs a { padding:.55rem 1.2rem; border-radius:999px; background:var(--sn-surface); border:1px solid var(--sn-border); color:var(--sn-ink-2); text-decoration:none; font-size:1rem; font-weight:600; transition: background .18s ease, color .18s ease; }
+  .tabs a.active { background:var(--sn-primary); color:#fff; border-color:transparent; }
   .slider-field { display:flex; flex-direction:column; gap:.25rem; font-size:.95rem; color:var(--sn-ink-2); }
   .slider-field .slider-row { display:flex; align-items:center; gap:.6rem; }
   .slider-field output { font-weight:700; color:var(--sn-ink); min-width:2.2ch; text-align:right; }
@@ -75,11 +89,14 @@
 </head>
 <body>
 <header>
-  <h1>🛡️ Project Sentinel</h1>
-  <p>Phân tích lỗ hổng bảo mật bằng AI — kết hợp quét SAST/DAST, kho tri thức, và agent phân tích có bằng chứng truy vết.</p>
+  {{ icons.shield() }}
+  <div class="brand-text">
+    <h1>Project Sentinel</h1>
+    <p>Phân tích lỗ hổng bảo mật bằng AI — kết hợp quét SAST/DAST, kho tri thức, và agent phân tích có bằng chứng truy vết.</p>
+  </div>
 </header>
 <div class="status-bar">
-  <span><strong>Chế độ AI:</strong> {{ "🟢 Real (DeepSeek)" if llm_real else "🟡 Mock (offline)" }}</span>
+  <span>{{ icons.dot("var(--sn-good)" if llm_real else "var(--sn-accent)") }}<strong>Chế độ AI:</strong> {{ "Real (DeepSeek)" if llm_real else "Mock (offline)" }}</span>
   <span><strong>Điểm dữ liệu:</strong> {{ db_count }}</span>
   <span><strong>Tài liệu tri thức:</strong> {{ kb_docs }}</span>
   <span><a href="https://github.com/AnkWuan2004/JuiceShop" target="_blank" rel="noopener">Mã nguồn</a></span>

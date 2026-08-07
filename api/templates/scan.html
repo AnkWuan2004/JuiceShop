@@ -1,23 +1,24 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 {% block content %}
 <h2>Quét bảo mật &amp; CI</h2>
 <div class="row">
   <div class="card">
     <strong>Semgrep (SAST)</strong>
     {% if semgrep_exists %}
-      <p>✅ Có kết quả Semgrep thật: <code>{{ semgrep_path }}</code></p>
+      <p>{{ icons.check() }}Có kết quả Semgrep thật: <code>{{ semgrep_path }}</code></p>
     {% else %}
-      <p>⚠️ Chưa có kết quả Semgrep chạy thật cục bộ — CI GitHub Actions có chạy Semgrep thật mỗi push/PR.</p>
+      <p>{{ icons.warn() }}Chưa có kết quả Semgrep chạy thật cục bộ — CI GitHub Actions có chạy Semgrep thật mỗi push/PR.</p>
     {% endif %}
     <pre>semgrep scan --config=p/default --json -o data-lake/reports/semgrep-report.json juice-shop</pre>
   </div>
   <div class="card">
     <strong>OWASP ZAP (DAST)</strong>
     {% if zap_exists %}
-      <p>✅ Có báo cáo ZAP thật từ CI: <code>{{ zap_path }}</code></p>
+      <p>{{ icons.check() }}Có báo cáo ZAP thật từ CI: <code>{{ zap_path }}</code></p>
       {% if zap_alerts is not none %}<p>{{ zap_alerts }} alert groups từ lần chạy CI thật (zaproxy/action-baseline).</p>{% endif %}
     {% else %}
-      <p>⚠️ Chưa có báo cáo ZAP thật.</p>
+      <p>{{ icons.warn() }}Chưa có báo cáo ZAP thật.</p>
     {% endif %}
   </div>
 </div>

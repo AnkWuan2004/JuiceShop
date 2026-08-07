@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 {% block content %}
 <h2>Tổng quan hệ thống</h2>
 <p style="color:var(--sn-ink-2);">Số liệu dưới đây đọc trực tiếp từ dữ liệu hiện có trong hệ thống tại thời điểm bạn mở trang này.</p>
@@ -22,7 +23,7 @@
 <div class="cap-group">
   <h3>{{ group_name }}</h3>
   {% for item, ok, note in items %}
-  <div class="check-line">{{ "✅" if ok else "⚠️" }} {{ item }}<br>
+  <div class="check-line">{{ icons.check() if ok else icons.warn() }}{{ item }}<br>
   &nbsp;&nbsp;&nbsp;&nbsp;<code>{{ note }}</code>
   </div>
   {% endfor %}

@@ -23,7 +23,7 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
     <option value="{{ r.id }}">[{{ r.id }}] {{ r.tool }} — {{ r.name }} ({{ r.path_or_url }})</option>
     {% endfor %}
   </select>
-  <button type="submit">🔎 Phân tích lỗi này</button>
+  <button type="submit">Phân tích lỗi này</button>
 </form>
 
 {% if one_result %}
@@ -59,12 +59,12 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
     <div class="slider-field" style="flex:1; min-width:260px;">
       <label for="maxn">Giới hạn số phát hiện</label>
       <div class="slider-row">
-        <input type="range" id="maxn" name="max_n" min="3" max="30" step="1" value="8" oninput="maxnOut.value=this.value">
+        <input type="range" id="maxn" name="max_n" min="3" max="74" step="1" value="8" oninput="maxnOut.value=this.value">
         <output id="maxnOut">8</output>
       </div>
     </div>
-    <div><button type="submit">▶️ Phân tích ngay</button></div>
-    <div><a href="/report/export"><button type="button" class="secondary">📥 Xuất báo cáo tổng quát</button></a></div>
+    <div><button type="submit">Phân tích ngay</button></div>
+    <div><a href="/report/export"><button type="button" class="secondary">Xuất báo cáo tổng quát</button></a></div>
   </div>
 </form>
 <p class="hint">
@@ -119,7 +119,7 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
 <hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
 <h3>Kiểm thử tự động</h3>
 <form method="post" action="/agent/test">
-  <button type="submit">🧪 Chạy bộ kiểm thử</button>
+  <button type="submit">Chạy bộ kiểm thử</button>
 </form>
 {% if test_output %}
 <pre>{{ test_output.output }}</pre>
