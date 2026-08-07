@@ -13,6 +13,7 @@ Fail-safe: DB rỗng / không hợp lệ → không crash, xuất trạng thái 
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import re
 import sqlite3
@@ -25,7 +26,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "agents"))
 sys.path.insert(0, str(ROOT / "rag"))
 
-from common import LLMClient, parse_json_loose, write_trace  # noqa: E402
+from common import (  # noqa: E402
+    LLMClient,
+    attach_trace_buffer,
+    get_trace_buffer,
+    parse_json_loose,
+    write_trace,
+)
 
 try:
     from guardrails import sanitize_for_agent  # noqa: E402
@@ -267,18 +274,40 @@ def build_findings(rows: list[dict], *, max_findings: int | None = None) -> tupl
 
     system = load_system_prompt()
     llm = LLMClient()
-
-    findings: list[dict] = []
-    dropped_no_evidence = 0
     valid_ids = {r.get("id") for r in rows}
-    for i, g in enumerate(groups, 1):
+
+    # POST-CHECK evidence trước khi gọi LLM: source_ids phải tồn tại thật trong input,
+    # location không rỗng — vừa đúng nguyên tắc evidence-based, vừa đỡ tốn lượt gọi LLM.
+    candidates: list[tuple[dict, str, list]] = []
+    dropped_no_evidence = 0
+    for g in groups:
         name = display_name(g["names"])
-        # POST-CHECK evidence: source_ids phải tồn tại thật trong input, location không rỗng
         ids = [x for x in g["source_ids"] if x in valid_ids]
         if not ids or not g["location"]:
             dropped_no_evidence += 1
             continue
-        explanation, remediation = enrich(g, name, system, llm)
+        candidates.append((g, name, ids))
+
+    # enrich() là I/O-bound (gọi LLM qua mạng) — chạy song song để không cộng dồn latency
+    # tuần tự (10 finding × ~10s/lượt real LLM dễ vượt timeout 60s của Vercel).
+    # contextvars không tự lan sang thread mới do ThreadPoolExecutor tạo — gắn thủ công buffer
+    # trace của thread cha vào từng thread con để cost/latency vẫn đếm đúng.
+    trace_buf = get_trace_buffer()
+
+    def _enrich_one(item: tuple[dict, str, list]) -> tuple[str, str]:
+        g, name, _ids = item
+        attach_trace_buffer(trace_buf)
+        return enrich(g, name, system, llm)
+
+    max_workers = min(6, len(candidates)) or 1
+    if candidates:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+            enriched = list(ex.map(_enrich_one, candidates))
+    else:
+        enriched = []
+
+    findings: list[dict] = []
+    for i, ((g, name, ids), (explanation, remediation)) in enumerate(zip(candidates, enriched), 1):
         findings.append(
             {
                 "id": f"F{i:03d}",

@@ -41,6 +41,8 @@ TRACES_DIR = ROOT / "data-lake" / "traces"
 
 SEV_COLOR = {"high": "var(--sn-critical)", "medium": "var(--sn-warning)", "low": "var(--sn-good)"}
 TOOL_COLOR_ORDER = ["var(--sn-series-1)", "var(--sn-series-2)", "var(--sn-series-3)", "var(--sn-series-4)"]
+# Trần an toàn cho "Phân tích toàn bộ" khi LLM thật đang bật — tránh vượt maxDuration=60s của Vercel.
+REAL_MODE_MAX_N = 15
 
 app = FastAPI(title="Project Sentinel")
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
@@ -404,13 +406,27 @@ def agent_run(request: Request, max_n: int = Form(8)):
     from analysis_agent import DEFAULT_DB, build_findings, load_findings
     from common import collect_traces, start_trace_capture
 
+    # Với LLM thật, mỗi finding tốn 1 lượt gọi mạng (~10s dù đã chạy song song theo lô 6) —
+    # chặn max_n ở mức an toàn cho maxDuration=60s của Vercel. Mock thì gần như tức thời, không cần chặn.
+    capped = False
+    if llm_is_real() and max_n > REAL_MODE_MAX_N:
+        max_n = REAL_MODE_MAX_N
+        capped = True
+
     start_trace_capture()
     try:
         rows_in = load_findings(DEFAULT_DB)
         findings_live, meta = build_findings(rows_in, max_findings=max_n)
-        live_result = {"findings": findings_live, "meta": meta, "error": None, "run_stats": run_stats_from_traces(collect_traces())}
+        live_result = {
+            "findings": findings_live,
+            "meta": meta,
+            "error": None,
+            "run_stats": run_stats_from_traces(collect_traces()),
+            "capped": capped,
+            "used_max_n": max_n,
+        }
     except Exception as e:
-        live_result = {"findings": [], "meta": None, "error": str(e), "run_stats": None}
+        live_result = {"findings": [], "meta": None, "error": str(e), "run_stats": None, "capped": False, "used_max_n": max_n}
 
     return templates.TemplateResponse(request, "agent.html", _agent_ctx(request, live_result=live_result))
 

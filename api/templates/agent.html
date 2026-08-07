@@ -92,6 +92,12 @@
       {% if live_result.error %}
         <p class="alert alert-error" role="alert">Lỗi: {{ live_result.error }}</p>
       {% else %}
+        {% if live_result.capped %}
+        <p class="alert" role="status">
+          Đang chạy LLM thật — tự giới hạn còn {{ live_result.used_max_n }} finding để tránh vượt
+          thời gian xử lý tối đa của server (mock offline thì không bị giới hạn này).
+        </p>
+        {% endif %}
         {% set m = live_result.meta %}
         <p>{{ m.findings }} phát hiện
           (<span class="badge badge-high">H {{ m.by_severity.high }}</span>

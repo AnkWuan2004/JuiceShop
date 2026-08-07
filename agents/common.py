@@ -33,6 +33,18 @@ def collect_traces() -> list[dict]:
     return list(buf) if buf is not None else []
 
 
+def get_trace_buffer() -> list | None:
+    """Trả về buffer hiện tại (object thật, không phải bản copy) — dùng để gắn sang thread khác,
+    vì contextvars không tự lan sang thread mới do một ThreadPoolExecutor tạo."""
+    return _trace_buffer.get()
+
+
+def attach_trace_buffer(buf: list | None) -> None:
+    """Gắn buffer có sẵn (lấy từ get_trace_buffer() ở thread cha) vào context của thread hiện tại,
+    để write_trace() gọi trong thread con vẫn ghi được vào cùng một buffer với thread cha."""
+    _trace_buffer.set(buf)
+
+
 def _load_dotenv() -> None:
     """Nạp .env ở gốc repo (không ghi đè biến đã có trong môi trường). Không phụ thuộc python-dotenv."""
     env_path = ROOT / ".env"
