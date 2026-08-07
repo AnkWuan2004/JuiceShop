@@ -34,8 +34,18 @@
 <p>DB rỗng — chạy <code>python scripts/seed_sample_reports.py</code> hoặc nạp scan thật bằng <code>parse_results.py</code>.</p>
 {% endif %}
 
-<details>
-  <summary>Tài liệu endpoint chính (docs/notes/ATTACK_SURFACE.md)</summary>
-  {% if attack_surface %}<pre>{{ attack_surface }}</pre>{% else %}<p>Chưa có file.</p>{% endif %}
-</details>
+<div class="card">
+  <h3 style="margin-top:0;">Bề mặt tấn công (Attack Surface)</h3>
+  <p>
+    Bề mặt tấn công là toàn bộ các điểm mà kẻ tấn công có thể tương tác với hệ thống — mọi endpoint API,
+    form đăng nhập, tham số đầu vào, và tài nguyên public. Việc lập bản đồ này giúp xác định
+    <strong>nên quét ở đâu</strong> (phạm vi SAST/DAST) và <strong>ưu tiên phân tích rủi ro nào trước</strong>
+    (endpoint xử lý dữ liệu nhạy cảm hoặc logic nghiệp vụ quan trọng thường rủi ro cao hơn trang tĩnh).
+  </p>
+  <p class="hint">Tài liệu dưới đây liệt kê các nhóm endpoint chính (xác thực, business logic REST API, khu vực quản trị) cùng rủi ro điển hình của từng nhóm.</p>
+  <details>
+    <summary>Xem chi tiết bản đồ bề mặt tấn công</summary>
+    {% if attack_surface %}<pre>{{ attack_surface }}</pre>{% else %}<p>Chưa có file.</p>{% endif %}
+  </details>
+</div>
 {% endblock %}

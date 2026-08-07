@@ -41,7 +41,7 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
       </div>
       {% endfor %}
       {% if one_result.run_stats %}
-      <p style="color:var(--sn-muted); font-size:.8rem;">
+      <p class="hint">
         Lần chạy này: {{ one_result.run_stats.calls }} lượt gọi AI ·
         {{ "mock" if one_result.run_stats.mock else "real" }} ·
         ${{ "%.4f"|format(one_result.run_stats.cost) }} ·
@@ -54,12 +54,20 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
 
 <hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
 <h3>Phân tích toàn bộ</h3>
-<form class="inline" method="post" action="/agent/run">
-  <label>Giới hạn số phát hiện: <input type="number" name="max_n" value="8" min="3" max="30"></label>
-  <button type="submit">▶️ Phân tích ngay</button>
+<form method="post" action="/agent/run">
+  <div class="row" style="align-items:flex-end;">
+    <div class="slider-field" style="flex:1; min-width:260px;">
+      <label for="maxn">Giới hạn số phát hiện</label>
+      <div class="slider-row">
+        <input type="range" id="maxn" name="max_n" min="3" max="30" step="1" value="8" oninput="maxnOut.value=this.value">
+        <output id="maxnOut">8</output>
+      </div>
+    </div>
+    <div><button type="submit">▶️ Phân tích ngay</button></div>
+    <div><a href="/report/export"><button type="button" class="secondary">📥 Xuất báo cáo tổng quát</button></a></div>
+  </div>
 </form>
-<a href="/report/export"><button type="button" class="secondary">📥 Xuất báo cáo tổng quát</button></a>
-<p style="color:var(--sn-muted); font-size:.82rem;">
+<p class="hint">
   Kết quả "Phân tích ngay" chạy AI thật trên dữ liệu hiện có nhưng không ghi đè báo cáo đã lưu trong hệ thống — chỉ hiển thị cho lần chạy này.
 </p>
 
@@ -73,7 +81,7 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
       <p>{{ m.findings }} phát hiện (nghiêm trọng={{ m.by_severity.high }} trung bình={{ m.by_severity.medium }} thấp={{ m.by_severity.low }}) ·
       {{ "mock" if m.llm_mock else "real" }} · bỏ qua vì thiếu bằng chứng: {{ m.dropped_no_evidence }}</p>
       {% if live_result.run_stats %}
-      <p style="color:var(--sn-muted); font-size:.8rem;">
+      <p class="hint">
         Lần chạy này: {{ live_result.run_stats.calls }} lượt gọi AI · ${{ "%.4f"|format(live_result.run_stats.cost) }} · {{ live_result.run_stats.latency_ms }} ms
       </p>
       {% endif %}
