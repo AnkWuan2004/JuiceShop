@@ -18,7 +18,7 @@ Project Sentinel = **DevSecOps baseline + AI-assisted pentest syndicate** chạy
 ## Users
 
 - Intern / junior AppSec học thực chiến an toàn  
-- Mentor đánh giá deliverable 12 tuần  
+- Mentor đánh giá deliverable 6 tuần (đề gốc VinUni × VinSOC)  
 
 ## Architecture (Compose)
 

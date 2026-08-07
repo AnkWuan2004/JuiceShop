@@ -87,7 +87,7 @@ API keys Kong demo: `recon-key-demo` (GET), `exploit-key-demo` (POST).
 
 ## Tuần 2 — Gateway + Agent IAM (demo nhanh)
 
-Báo cáo: `reports/week-2/report.md` · Gateway/IAM: `reports/week-2/gateway-agent-iam.md` · Plan: `reports/week-2/plan.md`
+Báo cáo: `reports/week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md` · Gateway/IAM: `reports/week-2/gateway-agent-iam.md` · Plan: `reports/week-2/plan.md`
 
 ```bash
 docker compose up -d
@@ -107,7 +107,7 @@ Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agen
 Đọc findings đã chuẩn hóa → gộp trùng → phân loại severity → giải thích + đề xuất fix → **JSONL**.
 Mỗi finding truy vết `evidence.source_ids` về row DB (evidence-based, không bịa).
 
-Báo cáo: `reports/week-3/report.md` · Chi tiết kỹ thuật: `reports/week-3/details.md` · Plan: `reports/week-3/plan.md`
+Báo cáo: `reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md` · Chi tiết kỹ thuật: `reports/week-3/details.md` · Plan: `reports/week-3/plan.md`
 System Prompt: `agents/prompts/analysis_system_prompt.txt`
 
 ```bash
@@ -142,14 +142,21 @@ liệu hiện có nhưng không ghi đè `analysis_report.jsonl` trong repo — 
 đó. Toàn bộ dữ liệu hiển thị khác (`vuln_data.db`, `rag/store/*`, báo cáo đã commit) đọc thẳng từ
 snapshot có sẵn trong repo.
 
-## Tiến độ (12 tuần)
+## Tiến độ
 
-| Tuần | Nội dung | Trạng thái |
+**Đề gốc mentor cấp là lộ trình 6 tuần** (`[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel.pdf`),
+không phải 12 tuần. Bảng dưới đây là **số thứ tự sprint nội bộ** của project (để theo dõi tiến độ
+code), không phải số tuần trong đề — hai cách đánh số **không khớp 1:1** (vd. sprint "2" bên dưới là
+nội dung Kong/IAM, tương ứng Tuần 4 của đề gốc; nội dung Tuần 2 thật của đề — chuẩn hóa + kho tri
+thức — nằm trong sprint "3"). Đối chiếu chi tiết Tuần 1-3: [`reports/gap-analysis-week1-3.md`](reports/gap-analysis-week1-3.md).
+Từ sprint 4 trở đi là phần **mở rộng tự làm thêm**, không nằm trong yêu cầu bắt buộc của đề 6 tuần.
+
+| Sprint | Nội dung | Trạng thái |
 |---|---|---|
 | 0 | Clone Juice Shop + Compose | ✅ Done |
 | 1 | SAST/DAST CI + parse + Attack Surface + seed reports | ✅ CI verified + demo |
 | 2 | Kong IAM + `test_kong_iam.py` + MCP stub | ✅ Verified demo |
-| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 140→~71 grounded · live demo :8790 · 13/13 test |
+| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 93→74 grounded · live demo Vercel · 13/13 test |
 | 4 | Recon Agent → Attack Surface Map | ✅ DB-driven + vs manual |
 | 5 | Fuzz Agent qua Kong rate-limit | ✅ Mutate-on-anomaly |
 | 6 | Multi-agent Supervisor + traces | ✅ File traces |
@@ -169,7 +176,7 @@ tại đây, gộp theo tuần phát hiện:
 
 - **Tuần 3 — Semantic search fallback.** Khi không cấu hình Chroma, "semantic search" trong kho tri
   thức dùng TF-IDF cosine similarity thay vì embedding thật — đủ demo nhưng kém chính xác ngữ nghĩa
-  hơn embedding model. Xem `reports/week-3/report.md`.
+  hơn embedding model. Xem `reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md`.
 - **Live demo Vercel không ghi đè báo cáo.** Serverless không có filesystem ghi bền vững; nút "Chạy
   Agent ngay" chỉ hiển thị kết quả tạm cho lần bấm đó, không cập nhật `analysis_report.jsonl` trong
   repo (xem mục Live demo phía trên).

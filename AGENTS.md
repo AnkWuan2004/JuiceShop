@@ -26,7 +26,8 @@ Project Sentinel: hạ tầng DevSecOps + AI security-analysis agent, thực hà
 
 ## Quy tắc quan trọng
 
-1. **`reports/week-N/report.md` là hồ sơ đóng băng.** Không sửa nội dung các report đã tồn tại để
+1. **Báo cáo trong `reports/week-N/` là hồ sơ đóng băng.** Tên file giữ định dạng
+   `<ngày>_<tên>_Week<N>.md` (không đổi sang tên chung chung). Không sửa nội dung report đã tồn tại để
    khớp code mới — kể cả khi đường dẫn/số liệu trong đó không còn đúng 100%. Cập nhật tiến độ mới
    thì viết report tuần mới hoặc thêm vào `reports/PROGRESS.md`.
 2. **Không commit secrets.** `.env` đã bị gitignore; chỉ sửa `.env.example`.

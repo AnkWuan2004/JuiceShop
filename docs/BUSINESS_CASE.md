@@ -23,7 +23,7 @@ CI SAST/DAST rẻ hơn nhưng thiếu ưu tiên và proof-of-exploit.
 | Rủi ro tấn công nhầm | Trung bình nếu không quy trình | Thấp (localhost-only + HITL) |
 
 **Kết luận:** ROI chính là **tốc độ học + tái sử dụng pipeline**, không phải thay 100% pentester.
-Với intern 12 tuần, giá trị = năng lực vận hành DevSecOps + AI an toàn — đo được bằng demo Compose và eval report.
+Với intern 6 tuần, giá trị = năng lực vận hành DevSecOps + AI an toàn — đo được bằng demo Compose và eval report.
 
 ## Go / No-go
 
