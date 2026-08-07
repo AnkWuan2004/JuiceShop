@@ -6,7 +6,7 @@ Tuần 3 — Test cho Security Analysis Agent.
   2. EMPTY   — DB rỗng → status 'no_findings', KHÔNG crash.
   3. INJECT  — row chứa chỉ dẫn độc hại → agent KHÔNG bị dụ xoá finding thật.
 
-Chạy: python scripts/test_analysis_agent.py   (exit 0 nếu tất cả PASS)
+Chạy: python tests/test_analysis_agent.py   (exit 0 nếu tất cả PASS)
 """
 from __future__ import annotations
 

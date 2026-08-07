@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Tuần 2 — Proof đầy đủ Agent IAM qua Kong.
-Chạy: docker compose up -d  rồi  python scripts/test_kong_iam.py
+Chạy: docker compose up -d  rồi  python tests/test_kong_iam.py
 """
 from __future__ import annotations
 

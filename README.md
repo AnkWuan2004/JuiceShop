@@ -14,19 +14,34 @@ Hạ tầng DevSecOps + AI-assisted pentest thực hành trên **OWASP Juice Sho
 
 ## Cấu trúc thư mục
 
+5 phút để nhớ lại repo này tổ chức thế nào — nhóm theo **vai trò**, không theo tuần:
+
 ```
 Project-Sentinel/
-├── juice-shop/              # Source OWASP Juice Shop (pin v20.1.1)
-├── kong/kong.yml            # Key-auth + ACL (recon GET / exploit POST)
-├── docker-compose.yml       # juice-shop + Kong (db-less)
-├── .github/workflows/       # CI: Semgrep + ZAP
-├── scripts/                 # parse, seed reports, test Kong IAM
-├── data-lake/               # reports, SQLite, traces, agent outputs
-├── agents/                  # Recon / Fuzz / Exploit / Supervisor / guardrails
-├── rag/                     # ingest, hybrid search, eval retrieval
-├── docs/                    # PRD, Business Case, Runbook, FinOps, Benchmark
-└── README.md
+├── AGENTS.md                # Quy tắc cho AI coding agent (đọc trước khi sửa code)
+├── CLAUDE.md                # Ghi chú riêng cho Claude Code, trỏ về AGENTS.md
+├── README.md                # File này
+│
+├── agents/                  # SOURCE — AI agent (Recon/Fuzz/Exploit/Analysis/Supervisor) + LLM client
+├── rag/                     #   ├─ rag/data/  = corpus tri thức (input, có version)
+├── api/                     #   └─ Live demo web (FastAPI) — deploy Vercel
+├── kong/, guardrails/       #   API gateway + guardrail config cho agent
+├── scripts/                 # Script vận hành/demo một lần (không phải test)
+├── tests/                   # TESTS — chạy: python tests/<file>.py
+│
+├── data-lake/                # DATASET/OUTPUT máy đọc — SQLite, JSONL, trace, artefact CI
+├── juice-shop/               # Target bị quét (vendor, pin v20.1.1) — không phải code của mình
+│
+├── docs/                     # Tài liệu sản phẩm SỐNG (PRD, Runbook, FinOps, Business Case)
+│   └── notes/                 #   Ghi chú kỹ thuật theo chủ đề (không phải báo cáo tuần)
+└── reports/                  # Báo cáo tiến độ theo TUẦN — đã nộp thì KHÔNG sửa nữa
+    ├── week-1/, week-2/, week-3/, ...report.md (≤1 trang, quá trình + kết quả)
+    └── PROGRESS.md             # Nhật ký tiến độ toàn dự án (được phép cập nhật liên tục)
 ```
+
+Quy tắc report vs code: **code** trong `agents/`, `api/`, `rag/`... là của chung project, thay đổi
+liên tục theo thời gian. **Báo cáo** trong `reports/week-N/` là hồ sơ lịch sử tại thời điểm nộp —
+không chỉnh sửa lại để khớp code mới. Chi tiết: [`reports/README.md`](reports/README.md).
 
 ## Chạy staging
 
@@ -64,7 +79,7 @@ python scripts/seed_sample_reports.py
 python rag/ingest.py && python rag/evaluate_retrieval.py
 python agents/run_syndicate.py          # auto HITL + injection probes
 python agents/eval_pipeline.py --both
-python scripts/test_kong_iam.py         # cần compose up
+python tests/test_kong_iam.py         # cần compose up
 python scripts/finops_report.py
 ```
 
@@ -72,12 +87,12 @@ API keys Kong demo: `recon-key-demo` (GET), `exploit-key-demo` (POST).
 
 ## Tuần 2 — Gateway + Agent IAM (demo nhanh)
 
-Báo cáo 1 trang: `docs/notes/Week2_API_Gateway_Agent_IAM.md` · Plan: `docs/notes/WEEK2_PLAN.md`
+Báo cáo: `reports/week-2/report.md` · Gateway/IAM: `reports/week-2/gateway-agent-iam.md` · Plan: `reports/week-2/plan.md`
 
 ```bash
 docker compose up -d
-python scripts/test_kong_iam.py              # 401 / 403 method / 403 path
-python scripts/test_kong_rate_limit.py       # 429 trên write
+python tests/test_kong_iam.py              # 401 / 403 method / 403 path
+python tests/test_kong_rate_limit.py       # 429 trên write
 # terminal riêng:
 python agents/mcp_server.py
 python scripts/demo_mcp_a2a.py
@@ -92,14 +107,14 @@ Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agen
 Đọc findings đã chuẩn hóa → gộp trùng → phân loại severity → giải thích + đề xuất fix → **JSONL**.
 Mỗi finding truy vết `evidence.source_ids` về row DB (evidence-based, không bịa).
 
-Báo cáo: `docs/notes/Week3_Security_Analysis_Agent.md` · Plan: `docs/notes/WEEK3_PLAN.md`
+Báo cáo: `reports/week-3/report.md` · Chi tiết kỹ thuật: `reports/week-3/details.md` · Plan: `reports/week-3/plan.md`
 System Prompt: `agents/prompts/analysis_system_prompt.txt`
 
 ```bash
 python scripts/seed_sample_reports.py     # ~140 rows (111 Semgrep + 29 ZAP) → vuln_data.db
 python rag/ingest.py                      # kho tri thức tuần 2 (nếu chưa ingest)
 python agents/analysis_agent.py --md      # → data-lake/analysis_report.jsonl (+ .md)
-python scripts/test_analysis_agent.py     # 3 tình huống: happy / empty / injection
+python tests/test_analysis_agent.py     # 3 tình huống: happy / empty / injection
 
 # Live demo UI (MOCK, không cần API key)
 python scripts/demo_analysis_agent.py     # seed → analyze → http://127.0.0.1:8790
@@ -116,9 +131,11 @@ pip install -r requirements.txt
 uvicorn api.index:app --reload    # http://127.0.0.1:8000
 ```
 
-Deploy lên Vercel: import repo GitHub này vào Vercel (Zero Config — `vercel.json` đã có sẵn rewrite
-`/* → /api/index`). Đặt biến môi trường `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` trong
-Project Settings → Environment Variables nếu muốn chạy LLM thật (bỏ trống → MOCK offline).
+Deploy lên Vercel: import repo GitHub này vào Vercel (Zero Config — Vercel tự nhận diện FastAPI là
+"backend framework" và route đúng path gốc; `vercel.json` chỉ khai báo `maxDuration`, **không** khai
+`rewrites` — thêm rewrite `/(.*) → /api/index` sẽ làm mọi route trả 404, xem `AGENTS.md`). Đặt biến
+môi trường `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` trong Project Settings → Environment
+Variables nếu muốn chạy LLM thật (bỏ trống → MOCK offline).
 
 Do Vercel serverless không có filesystem ghi bền vững, nút "Chạy Agent ngay" chạy Agent thật trên dữ
 liệu hiện có nhưng không ghi đè `analysis_report.jsonl` trong repo — kết quả chỉ hiển thị cho lần bấm
@@ -143,7 +160,19 @@ snapshot có sẵn trong repo.
 | 11 | Full Compose + FinOps + Runbook | ✅ CSV FinOps |
 | 12 | PRD + Business Case | ✅ + DEMO_CHECKLIST |
 
-Chi tiết nhật ký: `docs/notes/TIEN_DO.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
+Chi tiết nhật ký: `reports/PROGRESS.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
+
+## Giới hạn hiện tại
+
+Không tách file `DEBT.md` riêng (nhiều file nhỏ ở gốc repo gây rối hơn là giúp) — theo dõi hạn chế
+tại đây, gộp theo tuần phát hiện:
+
+- **Tuần 3 — Semantic search fallback.** Khi không cấu hình Chroma, "semantic search" trong kho tri
+  thức dùng TF-IDF cosine similarity thay vì embedding thật — đủ demo nhưng kém chính xác ngữ nghĩa
+  hơn embedding model. Xem `reports/week-3/report.md`.
+- **Live demo Vercel không ghi đè báo cáo.** Serverless không có filesystem ghi bền vững; nút "Chạy
+  Agent ngay" chỉ hiển thị kết quả tạm cho lần bấm đó, không cập nhật `analysis_report.jsonl` trong
+  repo (xem mục Live demo phía trên).
 
 ## An toàn
 

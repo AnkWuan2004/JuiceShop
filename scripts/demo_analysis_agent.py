@@ -94,7 +94,7 @@ def main() -> int:
         return 1
     summarize()
 
-    if run([sys.executable, "scripts/test_analysis_agent.py"], env=env) != 0:
+    if run([sys.executable, "tests/test_analysis_agent.py"], env=env) != 0:
         print("[!] Tests chưa PASS — kiểm tra lại")
         return 1
 

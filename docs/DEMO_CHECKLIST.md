@@ -37,7 +37,7 @@ Kỳ vọng: hybrid / hybrid_graphrag accuracy cao; P@3 / MRR trong `rag/store/r
 python scripts/demo_analysis_agent.py
 # UI: http://127.0.0.1:8790
 # Nút “Chạy Agent” → gộp trùng + severity + explanation/remediation → JSONL
-python scripts/test_analysis_agent.py   # happy / empty / injection
+python tests/test_analysis_agent.py   # happy / empty / injection
 ```
 
 Artifacts: `data-lake/vuln_data.db`, `data-lake/analysis_report.jsonl` (+ `.md`),
@@ -76,8 +76,8 @@ python agents/eval_pipeline.py --both
 python scripts/finops_report.py
 python scripts/monitor_agents.py
 python scripts/arize_viewer.py
-python scripts/test_kong_iam.py
-python scripts/test_kong_rate_limit.py
+python tests/test_kong_iam.py
+python tests/test_kong_rate_limit.py
 ```
 
 ## 6. Nói với người xem (30s)

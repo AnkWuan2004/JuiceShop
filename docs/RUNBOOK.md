@@ -43,7 +43,7 @@ python rag/evaluate_retrieval.py
 
 ```bash
 python agents/analysis_agent.py --md
-python scripts/test_analysis_agent.py
+python tests/test_analysis_agent.py
 python scripts/demo_analysis_agent.py   # UI http://127.0.0.1:8790
 ```
 
@@ -79,8 +79,8 @@ Demo checklist: `docs/DEMO_CHECKLIST.md`.
 ## Kong IAM & rate limit
 
 ```bash
-python scripts/test_kong_iam.py
-python scripts/test_kong_rate_limit.py
+python tests/test_kong_iam.py
+python tests/test_kong_rate_limit.py
 ```
 
 Keys: `recon-key-demo` (GET), `exploit-key-demo` (POST + rate-limit).

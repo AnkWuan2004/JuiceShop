@@ -305,7 +305,7 @@ def index(request: Request):
                 ("Báo cáo phân tích đã tạo", REPORT_JSONL.exists(), "data-lake/analysis_report.jsonl"),
                 (
                     "Bộ kiểm thử tự động",
-                    (ROOT / "scripts" / "test_analysis_agent.py").exists(),
+                    (ROOT / "tests" / "test_analysis_agent.py").exists(),
                     "3 kịch bản: happy / empty / injection",
                 ),
                 ("Luôn kèm bằng chứng truy vết", True, "mỗi phát hiện trỏ evidence.source_ids về dữ liệu gốc"),
@@ -444,7 +444,7 @@ def agent_analyze_one(request: Request, row_id: int = Form(...)):
 def agent_test(request: Request):
     try:
         res = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "test_analysis_agent.py")],
+            [sys.executable, str(ROOT / "tests" / "test_analysis_agent.py")],
             cwd=ROOT,
             capture_output=True,
             text=True,
