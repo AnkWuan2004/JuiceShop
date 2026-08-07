@@ -299,7 +299,10 @@ def build_findings(rows: list[dict], *, max_findings: int | None = None) -> tupl
         attach_trace_buffer(trace_buf)
         return enrich(g, name, system, llm)
 
-    max_workers = min(6, len(candidates)) or 1
+    # 8 worker: đo thực tế trên Vercel với LLM thật cho thấy ~17-18s/lượt gọi mạng; với trần
+    # REAL_MODE_MAX_N=15 ở api/index.py, 6 worker (3 lượt round) áp sát 52s/60s — quá ít biên an
+    # toàn. 8 worker → 2 lượt round (~35s), biên an toàn rộng hơn nhiều.
+    max_workers = min(8, len(candidates)) or 1
     if candidates:
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
             enriched = list(ex.map(_enrich_one, candidates))
