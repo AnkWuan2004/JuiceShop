@@ -333,13 +333,23 @@ def scan(request: Request):
             zap_alerts = sum(len(s.get("alerts", [])) for s in zdata.get("site", []))
         except Exception:
             zap_alerts = None
+    try:
+        from analysis_agent import unify_severity
+    except Exception:
+        def unify_severity(raw: str) -> str:  # type: ignore[misc]
+            return "medium"
+
+    rows = db_rows(200)
+    for r in rows:
+        r["sev_norm"] = unify_severity(r.get("severity", ""))
+
     ctx = {
         "semgrep_exists": SEMGREP_REAL.exists(),
         "semgrep_path": str(SEMGREP_REAL.relative_to(ROOT)) if SEMGREP_REAL.exists() else None,
         "zap_exists": CI_ZAP_REAL.exists(),
         "zap_path": str(CI_ZAP_REAL.relative_to(ROOT)) if CI_ZAP_REAL.exists() else None,
         "zap_alerts": zap_alerts,
-        "rows": db_rows(200),
+        "rows": rows,
         "attack_surface": ATTACK_SURFACE.read_text(encoding="utf-8") if ATTACK_SURFACE.exists() else None,
         **base_ctx(request),
     }

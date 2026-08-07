@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% import "_icons.html" as icons %}
+{% block title %}Quét bảo mật — Project Sentinel{% endblock %}
 {% block content %}
-<h2>Quét bảo mật &amp; CI</h2>
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-accent)") }}SAST · DAST · CI</div>
+  <h2>Quét bảo mật &amp; CI</h2>
+  <p class="page-lead">Theo dõi kết quả Semgrep và OWASP ZAP, dữ liệu đã nạp vào <code>vuln_data.db</code>, và bản đồ bề mặt tấn công.</p>
+</div>
+
 <div class="row">
   <div class="card">
-    <strong>Semgrep (SAST)</strong>
+    <strong class="card-title">Semgrep (SAST)</strong>
     {% if semgrep_exists %}
       <p>{{ icons.check() }}Có kết quả Semgrep thật: <code>{{ semgrep_path }}</code></p>
     {% else %}
@@ -13,7 +19,7 @@
     <pre>semgrep scan --config=p/default --json -o data-lake/reports/semgrep-report.json juice-shop</pre>
   </div>
   <div class="card">
-    <strong>OWASP ZAP (DAST)</strong>
+    <strong class="card-title">OWASP ZAP (DAST)</strong>
     {% if zap_exists %}
       <p>{{ icons.check() }}Có báo cáo ZAP thật từ CI: <code>{{ zap_path }}</code></p>
       {% if zap_alerts is not none %}<p>{{ zap_alerts }} alert groups từ lần chạy CI thật (zaproxy/action-baseline).</p>{% endif %}
@@ -25,14 +31,26 @@
 
 <h3>Dữ liệu đã nạp vào <code>vuln_data.db</code></h3>
 {% if rows %}
+<div class="table-wrap" role="region" aria-label="Bảng lỗ hổng" tabindex="0">
 <table>
-  <tr><th>id</th><th>tool</th><th>severity</th><th>name</th><th>path_or_url</th></tr>
+  <thead>
+    <tr><th>id</th><th>tool</th><th>severity</th><th>name</th><th>path_or_url</th></tr>
+  </thead>
+  <tbody>
   {% for r in rows %}
-  <tr><td>{{ r.id }}</td><td>{{ r.tool }}</td><td>{{ r.severity }}</td><td>{{ r.name }}</td><td>{{ r.path_or_url }}</td></tr>
+  <tr>
+    <td><code>{{ r.id }}</code></td>
+    <td>{{ r.tool }}</td>
+    <td><span class="badge badge-{{ r.sev_norm }}">{{ r.severity }}</span></td>
+    <td>{{ r.name }}</td>
+    <td><code>{{ r.path_or_url }}</code></td>
+  </tr>
   {% endfor %}
+  </tbody>
 </table>
+</div>
 {% else %}
-<p>DB rỗng — chạy <code>python scripts/seed_sample_reports.py</code> hoặc nạp scan thật bằng <code>parse_results.py</code>.</p>
+<p class="alert">DB rỗng — chạy <code>python scripts/seed_sample_reports.py</code> hoặc nạp scan thật bằng <code>parse_results.py</code>.</p>
 {% endif %}
 
 <div class="card">
@@ -40,10 +58,9 @@
   <p>
     Bề mặt tấn công là toàn bộ các điểm mà kẻ tấn công có thể tương tác với hệ thống — mọi endpoint API,
     form đăng nhập, tham số đầu vào, và tài nguyên public. Việc lập bản đồ này giúp xác định
-    <strong>nên quét ở đâu</strong> (phạm vi SAST/DAST) và <strong>ưu tiên phân tích rủi ro nào trước</strong>
-    (endpoint xử lý dữ liệu nhạy cảm hoặc logic nghiệp vụ quan trọng thường rủi ro cao hơn trang tĩnh).
+    <strong>nên quét ở đâu</strong> (phạm vi SAST/DAST) và <strong>ưu tiên phân tích rủi ro nào trước</strong>.
   </p>
-  <p class="hint">Tài liệu dưới đây liệt kê các nhóm endpoint chính (xác thực, business logic REST API, khu vực quản trị) cùng rủi ro điển hình của từng nhóm.</p>
+  <p class="hint">Tài liệu dưới đây liệt kê các nhóm endpoint chính cùng rủi ro điển hình của từng nhóm.</p>
   <details>
     <summary>Xem chi tiết bản đồ bề mặt tấn công</summary>
     {% if attack_surface %}<pre>{{ attack_surface }}</pre>{% else %}<p>Chưa có file.</p>{% endif %}

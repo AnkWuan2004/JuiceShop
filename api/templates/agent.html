@@ -1,13 +1,17 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% block title %}Phân tích AI — Project Sentinel{% endblock %}
 {% block content %}
-<h2>Phân tích bảo mật bằng AI</h2>
-<p>Đọc dữ liệu quét → gộp trùng → phân loại mức độ → giải thích + đề xuất khắc phục (AI, có tham chiếu kho tri thức) → báo cáo có bằng chứng.
-Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, không suy diễn.</p>
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-series-4)") }}Evidence-grounded agent</div>
+  <h2>Phân tích bảo mật bằng AI</h2>
+  <p class="page-lead">Đọc dữ liệu quét → gộp trùng → phân loại mức độ → giải thích + đề xuất khắc phục (có tham chiếu kho tri thức). Mỗi phát hiện trỏ <code>source_ids</code> về dữ liệu gốc.</p>
+</div>
 
-<div class="tile-row" style="margin-bottom:1rem;">
+<div class="tile-row">
   <div class="stat-tile"><div class="stat-value">{{ llm_stats.total_calls }}</div><div class="stat-label">Lượt gọi AI (lịch sử)</div></div>
-  <div class="stat-tile"><div class="stat-value">${{ "%.4f"|format(llm_stats.total_cost) }}</div><div class="stat-label">Chi phí ước tính (lịch sử)</div></div>
-  <div class="stat-tile"><div class="stat-value">{{ "%.0f"|format(llm_stats.avg_latency_ms) }} ms</div><div class="stat-label">Độ trễ trung bình / lượt</div></div>
+  <div class="stat-tile"><div class="stat-value">${{ "%.4f"|format(llm_stats.total_cost) }}</div><div class="stat-label">Chi phí ước tính</div></div>
+  <div class="stat-tile"><div class="stat-value">{{ "%.0f"|format(llm_stats.avg_latency_ms) }}<span style="font-size:.55em; font-weight:500; color:var(--sn-muted);"> ms</span></div><div class="stat-label">Độ trễ trung bình / lượt</div></div>
 </div>
 
 <details>
@@ -15,26 +19,33 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
   {% if prompt_text %}<pre>{{ prompt_text }}</pre>{% endif %}
 </details>
 
-<h3>Phân tích một lỗi cụ thể</h3>
-<p style="color:var(--sn-ink-2); font-size:.9rem;">Chọn một điểm dữ liệu để AI giải thích và đề xuất khắc phục riêng cho lỗi đó.</p>
-<form class="inline" method="post" action="/agent/analyze">
-  <select name="row_id" style="min-width:360px;">
-    {% for r in candidates %}
-    <option value="{{ r.id }}">[{{ r.id }}] {{ r.tool }} — {{ r.name }} ({{ r.path_or_url }})</option>
-    {% endfor %}
-  </select>
-  <button type="submit">Phân tích lỗi này</button>
-</form>
+<section class="card" aria-labelledby="one-finding">
+  <h3 id="one-finding" style="margin-top:0;">Phân tích một lỗi cụ thể</h3>
+  <p class="hint">Chọn một điểm dữ liệu để AI giải thích và đề xuất khắc phục riêng cho lỗi đó.</p>
+  <form class="inline" method="post" action="/agent/analyze">
+    <div style="flex:1; min-width:min(100%, 280px);">
+      <label for="row_id">Điểm dữ liệu</label>
+      <select id="row_id" name="row_id">
+        {% for r in candidates %}
+        <option value="{{ r.id }}">[{{ r.id }}] {{ r.tool }} — {{ r.name }} ({{ r.path_or_url }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="align-self:flex-end;">
+      <button type="submit">Phân tích lỗi này</button>
+    </div>
+  </form>
 
-{% if one_result %}
-  <div class="card">
+  {% if one_result %}
     {% if one_result.error %}
-      <p style="color:var(--sn-critical);">{{ one_result.error }}</p>
+      <p class="alert alert-error" role="alert">{{ one_result.error }}</p>
     {% else %}
       {% for f in one_result.findings %}
-      <div class="check-line">
-        <span class="sev-{{ f.severity }}"><strong>[{{ f.id }}] {{ f.name }}</strong> — {{ f.location }}</span>
-        <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
+      <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+        <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+        <span class="sev-{{ f.severity }}"><strong>[{{ f.id }}] {{ f.name }}</strong></span>
+        <span class="hint">— {{ f.location }}</span>
+        <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
         <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
         <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
         <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
@@ -49,80 +60,100 @@ Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, 
       </p>
       {% endif %}
     {% endif %}
-  </div>
-{% endif %}
+  {% endif %}
+</section>
 
-<hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
-<h3>Phân tích toàn bộ</h3>
-<form method="post" action="/agent/run">
-  <div class="row" style="align-items:flex-end;">
-    <div class="slider-field" style="flex:1; min-width:260px;">
-      <label for="maxn">Giới hạn số phát hiện</label>
-      <div class="slider-row">
-        <input type="range" id="maxn" name="max_n" min="3" max="74" step="1" value="8" oninput="maxnOut.value=this.value">
-        <output id="maxnOut">8</output>
+<hr class="section-divider">
+
+<section aria-labelledby="batch-run">
+  <h3 id="batch-run">Phân tích toàn bộ</h3>
+  <form method="post" action="/agent/run" class="card">
+    <div class="row" style="align-items:flex-end;">
+      <div class="slider-field" style="flex:1; min-width:min(100%, 240px);">
+        <label for="maxn">Giới hạn số phát hiện</label>
+        <div class="slider-row">
+          <input type="range" id="maxn" name="max_n" min="3" max="74" step="1" value="8" oninput="maxnOut.value=this.value">
+          <output id="maxnOut" for="maxn">8</output>
+        </div>
+      </div>
+      <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+        <button type="submit">Phân tích ngay</button>
+        <a class="btn secondary" href="/report/export">Xuất báo cáo</a>
       </div>
     </div>
-    <div><button type="submit">Phân tích ngay</button></div>
-    <div><a href="/report/export"><button type="button" class="secondary">Xuất báo cáo tổng quát</button></a></div>
-  </div>
-</form>
-<p class="hint">
-  Kết quả "Phân tích ngay" chạy AI thật trên dữ liệu hiện có nhưng không ghi đè báo cáo đã lưu trong hệ thống — chỉ hiển thị cho lần chạy này.
-</p>
+  </form>
+  <p class="hint">
+    Kết quả "Phân tích ngay" chạy AI trên dữ liệu hiện có nhưng không ghi đè báo cáo đã lưu — chỉ hiển thị cho lần chạy này.
+  </p>
 
-{% if live_result %}
-  <div class="card">
-    <strong>Kết quả vừa chạy:</strong>
-    {% if live_result.error %}
-      <p style="color:var(--sn-critical);">Lỗi: {{ live_result.error }}</p>
-    {% else %}
-      {% set m = live_result.meta %}
-      <p>{{ m.findings }} phát hiện (nghiêm trọng={{ m.by_severity.high }} trung bình={{ m.by_severity.medium }} thấp={{ m.by_severity.low }}) ·
-      {{ "mock" if m.llm_mock else "real" }} · bỏ qua vì thiếu bằng chứng: {{ m.dropped_no_evidence }}</p>
-      {% if live_result.run_stats %}
-      <p class="hint">
-        Lần chạy này: {{ live_result.run_stats.calls }} lượt gọi AI · ${{ "%.4f"|format(live_result.run_stats.cost) }} · {{ live_result.run_stats.latency_ms }} ms
-      </p>
+  {% if live_result %}
+    <div class="card">
+      <strong class="card-title">Kết quả vừa chạy</strong>
+      {% if live_result.error %}
+        <p class="alert alert-error" role="alert">Lỗi: {{ live_result.error }}</p>
+      {% else %}
+        {% set m = live_result.meta %}
+        <p>{{ m.findings }} phát hiện
+          (<span class="badge badge-high">H {{ m.by_severity.high }}</span>
+          <span class="badge badge-medium">M {{ m.by_severity.medium }}</span>
+          <span class="badge badge-low">L {{ m.by_severity.low }}</span>
+          · {{ "mock" if m.llm_mock else "real" }} · bỏ qua thiếu bằng chứng: {{ m.dropped_no_evidence }}
+        </p>
+        {% if live_result.run_stats %}
+        <p class="hint">
+          Lần chạy này: {{ live_result.run_stats.calls }} lượt gọi AI · ${{ "%.4f"|format(live_result.run_stats.cost) }} · {{ live_result.run_stats.latency_ms }} ms
+        </p>
+        {% endif %}
+        {% for f in live_result.findings %}
+        <details>
+          <summary><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span> <span class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }}</span> <span class="hint">— {{ f.location }}</span></summary>
+          <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
+          <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+          <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
+          <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
+        </details>
+        {% endfor %}
       {% endif %}
-      {% for f in live_result.findings %}
-      <details>
-        <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
-        <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
-        <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
-        <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
-        <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
-      </details>
-      {% endfor %}
-    {% endif %}
-  </div>
-{% endif %}
+    </div>
+  {% endif %}
+</section>
 
-<h3>Báo cáo đã lưu trong hệ thống</h3>
-{% if empty_status %}
-  <p>Chưa có phát hiện nào được ghi nhận.</p>
-{% elif findings %}
-  <p><strong>{{ findings|length }} phát hiện</strong> đã lưu:</p>
-  {% for f in findings %}
-  <details>
-    <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
-    <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
-    <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
-    <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
-    <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
-  </details>
-  {% endfor %}
-{% else %}
-  <p>Chưa có báo cáo — bấm "Phân tích ngay" ở trên.</p>
-{% endif %}
+<hr class="section-divider">
 
-<hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
-<h3>Kiểm thử tự động</h3>
-<form method="post" action="/agent/test">
-  <button type="submit">Chạy bộ kiểm thử</button>
-</form>
-{% if test_output %}
-<pre>{{ test_output.output }}</pre>
-{% if test_output.ok %}<p style="color:var(--sn-good);">Tất cả kiểm thử PASS.</p>{% else %}<p style="color:var(--sn-critical);">Có kiểm thử FAIL — xem log trên.</p>{% endif %}
-{% endif %}
+<section aria-labelledby="saved-report">
+  <h3 id="saved-report">Báo cáo đã lưu trong hệ thống</h3>
+  {% if empty_status %}
+    <p class="alert">Chưa có phát hiện nào được ghi nhận.</p>
+  {% elif findings %}
+    <p><strong>{{ findings|length }} phát hiện</strong> đã lưu:</p>
+    {% for f in findings %}
+    <details>
+      <summary><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span> <span class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }}</span> <span class="hint">— {{ f.location }}</span></summary>
+      <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
+      <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+      <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
+      <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
+    </details>
+    {% endfor %}
+  {% else %}
+    <p class="alert">Chưa có báo cáo — bấm "Phân tích ngay" ở trên.</p>
+  {% endif %}
+</section>
+
+<hr class="section-divider">
+
+<section aria-labelledby="auto-test">
+  <h3 id="auto-test">Kiểm thử tự động</h3>
+  <form method="post" action="/agent/test">
+    <button type="submit">Chạy bộ kiểm thử</button>
+  </form>
+  {% if test_output %}
+  <pre>{{ test_output.output }}</pre>
+  {% if test_output.ok %}
+  <p class="alert alert-ok" role="status">Tất cả kiểm thử PASS.</p>
+  {% else %}
+  <p class="alert alert-error" role="alert">Có kiểm thử FAIL — xem log trên.</p>
+  {% endif %}
+  {% endif %}
+</section>
 {% endblock %}

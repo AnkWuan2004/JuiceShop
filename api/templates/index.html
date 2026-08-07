@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% import "_icons.html" as icons %}
+{% block title %}Tổng quan — Project Sentinel{% endblock %}
 {% block content %}
-<h2>Tổng quan hệ thống</h2>
-<p style="color:var(--sn-ink-2);">Số liệu dưới đây đọc trực tiếp từ dữ liệu hiện có trong hệ thống tại thời điểm bạn mở trang này.</p>
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-primary)") }}Operations overview</div>
+  <h2>Tổng quan hệ thống</h2>
+  <p class="page-lead">Số liệu đọc trực tiếp từ dữ liệu hiện có trong hệ thống tại thời điểm bạn mở trang này — SAST/DAST, kho tri thức, và trạng thái agent.</p>
+</div>
 
 <div class="tile-row">
   {% for t in tiles %}{{ t|safe }}{% endfor %}
@@ -10,23 +14,23 @@
 
 <div class="row">
   <div class="card">
-    <strong>Phân bố theo mức độ nghiêm trọng</strong>
-    <div style="margin-top:.75rem;">{{ sev_chart|safe }}</div>
+    <strong class="card-title">Phân bố theo mức độ nghiêm trọng</strong>
+    <div style="margin-top:.5rem;">{{ sev_chart|safe }}</div>
   </div>
   <div class="card">
-    <strong>Phân bố theo công cụ quét</strong>
-    <div style="margin-top:.75rem;">{{ tool_chart|safe }}</div>
+    <strong class="card-title">Phân bố theo công cụ quét</strong>
+    <div style="margin-top:.5rem;">{{ tool_chart|safe }}</div>
   </div>
 </div>
 
 {% for group_name, items in capability_groups %}
-<div class="cap-group">
-  <h3>{{ group_name }}</h3>
+<section class="cap-group" aria-labelledby="cap-{{ loop.index }}">
+  <h3 id="cap-{{ loop.index }}">{{ group_name }}</h3>
   {% for item, ok, note in items %}
   <div class="check-line">{{ icons.check() if ok else icons.warn() }}{{ item }}<br>
-  &nbsp;&nbsp;&nbsp;&nbsp;<code>{{ note }}</code>
+  <span class="hint" style="margin-left:1.6rem; display:inline-block;"><code>{{ note }}</code></span>
   </div>
   {% endfor %}
-</div>
+</section>
 {% endfor %}
 {% endblock %}

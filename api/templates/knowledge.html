@@ -1,39 +1,46 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% block title %}Kho tri thức — Project Sentinel{% endblock %}
 {% block content %}
-<h2>Kho tri thức &amp; tìm kiếm</h2>
-<p>{{ docs|length }} tài liệu tham chiếu (OWASP Top 10, cheatsheet, CVE, ví dụ khai thác thực tế).</p>
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-series-3)") }}RAG · Hybrid search</div>
+  <h2>Kho tri thức &amp; tìm kiếm</h2>
+  <p class="page-lead">{{ docs|length }} tài liệu tham chiếu (OWASP Top 10, cheatsheet, CVE, ví dụ khai thác thực tế) phục vụ agent phân tích có bằng chứng.</p>
+</div>
+
 <details>
-  <summary>Danh sách tài liệu</summary>
-  <ul>{% for d in docs %}<li><code>{{ d }}</code></li>{% endfor %}</ul>
+  <summary>Danh sách tài liệu trong kho</summary>
+  <ul style="margin:.25rem 0 .5rem; padding-left:1.2rem;">{% for d in docs %}<li><code>{{ d }}</code></li>{% endfor %}</ul>
 </details>
 
-<div class="tabs">
-  <a href="/knowledge?mode=keyword&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'keyword' else '' }}">Keyword</a>
-  <a href="/knowledge?mode=semantic&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'semantic' else '' }}">Semantic</a>
+<div class="tabs" role="tablist" aria-label="Chế độ tìm kiếm">
+  <a href="/knowledge?mode=keyword&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'keyword' else '' }}" {% if mode == 'keyword' %}aria-current="page"{% endif %}>Keyword</a>
+  <a href="/knowledge?mode=semantic&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'semantic' else '' }}" {% if mode == 'semantic' %}aria-current="page"{% endif %}>Semantic</a>
 </div>
 <p class="hint">
-  <strong>Keyword</strong> khớp đúng thuật ngữ xuất hiện trong tài liệu (BM25).
+  <strong>Keyword</strong> khớp đúng thuật ngữ (BM25).
   <strong>Semantic</strong> hiểu ý câu hỏi ngay cả khi không trùng từ khóa (vector similarity{{ ' — ' ~ backend if backend and mode == 'semantic' else '' }}).
 </p>
 
-<form method="get" action="/knowledge">
+<form method="get" action="/knowledge" class="card" style="margin-top:1rem;">
   <input type="hidden" name="mode" value="{{ mode }}">
   <div class="row" style="align-items:flex-end;">
-    <div style="flex:2; min-width:280px;">
-      <input type="text" name="q" value="{{ q }}" placeholder="Thử: 'SQL Injection' hoặc 'làm sao chặn XSS'" style="width:100%;">
+    <div style="flex:2; min-width:min(100%, 260px);">
+      <label for="q">Câu hỏi / từ khóa</label>
+      <input id="q" type="text" name="q" value="{{ q }}" placeholder="Thử: SQL Injection hoặc làm sao chặn XSS" autocomplete="off">
     </div>
-    <div class="slider-field" style="flex:1;">
+    <div class="slider-field" style="flex:1; min-width:140px;">
       <label for="topk">Top K</label>
       <div class="slider-row">
         <input type="range" id="topk" name="top_k" min="1" max="20" step="1" value="{{ top_k }}" oninput="topkOut.value=this.value">
-        <output id="topkOut">{{ top_k }}</output>
+        <output id="topkOut" for="topk">{{ top_k }}</output>
       </div>
     </div>
-    <div class="slider-field" style="flex:1;">
-      <label for="minscore">Ngưỡng tương đồng tối thiểu</label>
+    <div class="slider-field" style="flex:1; min-width:160px;">
+      <label for="minscore">Ngưỡng tối thiểu</label>
       <div class="slider-row">
         <input type="range" id="minscore" name="min_score" min="0" max="1" step="0.05" value="{{ min_score }}" oninput="minscoreOut.value=this.value">
-        <output id="minscoreOut">{{ min_score }}</output>
+        <output id="minscoreOut" for="minscore">{{ min_score }}</output>
       </div>
     </div>
     <div>
@@ -43,15 +50,15 @@
 </form>
 
 {% if error %}
-<p style="color:var(--sn-critical);">{{ error }}</p>
+<p class="alert alert-error" role="alert">{{ error }}</p>
 {% elif hits %}
   {% for h in hits %}
-  <div class="card">
-    <strong>{{ loop.index }}. <code>{{ h.id }}</code></strong> — độ tương đồng {{ "%.3f"|format(h.score) }}
+  <article class="card" style="animation:rise .4s ease both; animation-delay:{{ loop.index0 * 0.04 }}s;">
+    <strong class="card-title">{{ loop.index }}. <code>{{ h.id }}</code> <span class="hint">· score {{ "%.3f"|format(h.score) }}</span></strong>
     <pre>{{ h.text[:400] }}</pre>
-  </div>
+  </article>
   {% endfor %}
 {% elif q %}
-<p>Không có kết quả trên ngưỡng đã chọn — thử hạ ngưỡng tương đồng hoặc đổi chế độ tìm kiếm.</p>
+<p class="alert">Không có kết quả trên ngưỡng đã chọn — thử hạ ngưỡng tương đồng hoặc đổi chế độ tìm kiếm.</p>
 {% endif %}
 {% endblock %}
