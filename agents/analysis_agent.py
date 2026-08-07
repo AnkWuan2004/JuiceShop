@@ -320,9 +320,9 @@ def write_report(findings: list[dict], meta: dict, out_path: Path) -> None:
             f.write(json.dumps(finding, ensure_ascii=False) + "\n")
 
 
-def write_markdown(findings: list[dict], meta: dict, md_path: Path) -> None:
+def render_markdown(findings: list[dict], meta: dict) -> str:
     lines = [
-        "# Security Analysis Report (Tuần 3)",
+        "# Security Analysis Report",
         "",
         f"- Rows quét: **{meta['total_rows']}** → nhóm: **{meta['groups']}** → findings: **{meta['findings']}** "
         f"(drop no-evidence: {meta['dropped_no_evidence']})",
@@ -337,7 +337,11 @@ def write_markdown(findings: list[dict], meta: dict, md_path: Path) -> None:
             f"| {x['id']} | {x['severity']} | {x['name'][:44]} | `{x['location'][:48]}` | "
             f"{'+'.join(t.split()[0] for t in x['evidence']['tools'])} | {x['confidence']} |"
         )
-    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def write_markdown(findings: list[dict], meta: dict, md_path: Path) -> None:
+    md_path.write_text(render_markdown(findings, meta), encoding="utf-8")
 
 
 def run(db: Path = DEFAULT_DB, out: Path = DEFAULT_OUT, *, max_findings: int | None = None, md: bool = False) -> dict:

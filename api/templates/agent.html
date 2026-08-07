@@ -1,33 +1,82 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Tuần 3 — Security Analysis Agent</h2>
-<p>Đọc <code>vuln_data.db</code> → gộp trùng → phân loại severity → giải thích + đề xuất fix (LLM grounded trên RAG) → JSONL.
-Evidence-based: mỗi finding trỏ <code>source_ids</code> về DB, không bịa.</p>
+<h2>Phân tích bảo mật bằng AI</h2>
+<p>Đọc dữ liệu quét → gộp trùng → phân loại mức độ → giải thích + đề xuất khắc phục (AI, có tham chiếu kho tri thức) → báo cáo có bằng chứng.
+Mỗi phát hiện đều trỏ <code>source_ids</code> về dữ liệu gốc, không suy diễn.</p>
+
+<div class="tile-row" style="margin-bottom:1rem;">
+  <div class="stat-tile"><div class="stat-value">{{ llm_stats.total_calls }}</div><div class="stat-label">Lượt gọi AI (lịch sử)</div></div>
+  <div class="stat-tile"><div class="stat-value">${{ "%.4f"|format(llm_stats.total_cost) }}</div><div class="stat-label">Chi phí ước tính (lịch sử)</div></div>
+  <div class="stat-tile"><div class="stat-value">{{ "%.0f"|format(llm_stats.avg_latency_ms) }} ms</div><div class="stat-label">Độ trễ trung bình / lượt</div></div>
+</div>
 
 <details>
-  <summary>System Prompt (lưu trong repo)</summary>
+  <summary>System Prompt đang dùng</summary>
   {% if prompt_text %}<pre>{{ prompt_text }}</pre>{% endif %}
 </details>
 
-<form class="inline" method="post" action="/agent/run">
-  <label>Giới hạn số finding: <input type="number" name="max_n" value="8" min="3" max="30"></label>
-  <button type="submit">▶️ Chạy Agent ngay</button>
-  <span>LLM mode hiện tại: <strong>{{ "REAL" if llm_real else "MOCK" }}</strong></span>
+<h3>Phân tích một lỗi cụ thể</h3>
+<p style="color:var(--sn-ink-2); font-size:.9rem;">Chọn một điểm dữ liệu để AI giải thích và đề xuất khắc phục riêng cho lỗi đó.</p>
+<form class="inline" method="post" action="/agent/analyze">
+  <select name="row_id" style="min-width:360px;">
+    {% for r in candidates %}
+    <option value="{{ r.id }}">[{{ r.id }}] {{ r.tool }} — {{ r.name }} ({{ r.path_or_url }})</option>
+    {% endfor %}
+  </select>
+  <button type="submit">🔎 Phân tích lỗi này</button>
 </form>
-<p style="color:#9aa0aa; font-size:.85rem;">
-  Lưu ý: trên Vercel nút này chạy Agent thật trên dữ liệu hiện có, nhưng <strong>không ghi đè</strong>
-  <code>analysis_report.jsonl</code> trong repo (serverless không có filesystem ghi bền vững) — kết quả bên dưới chỉ hiển thị cho lần bấm này.
+
+{% if one_result %}
+  <div class="card">
+    {% if one_result.error %}
+      <p style="color:var(--sn-critical);">{{ one_result.error }}</p>
+    {% else %}
+      {% for f in one_result.findings %}
+      <div class="check-line">
+        <span class="sev-{{ f.severity }}"><strong>[{{ f.id }}] {{ f.name }}</strong> — {{ f.location }}</span>
+        <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
+        <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+        <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
+        <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
+      </div>
+      {% endfor %}
+      {% if one_result.run_stats %}
+      <p style="color:var(--sn-muted); font-size:.8rem;">
+        Lần chạy này: {{ one_result.run_stats.calls }} lượt gọi AI ·
+        {{ "mock" if one_result.run_stats.mock else "real" }} ·
+        ${{ "%.4f"|format(one_result.run_stats.cost) }} ·
+        {{ one_result.run_stats.latency_ms }} ms
+      </p>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}
+
+<hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
+<h3>Phân tích toàn bộ</h3>
+<form class="inline" method="post" action="/agent/run">
+  <label>Giới hạn số phát hiện: <input type="number" name="max_n" value="8" min="3" max="30"></label>
+  <button type="submit">▶️ Phân tích ngay</button>
+</form>
+<a href="/report/export"><button type="button" class="secondary">📥 Xuất báo cáo tổng quát</button></a>
+<p style="color:var(--sn-muted); font-size:.82rem;">
+  Kết quả "Phân tích ngay" chạy AI thật trên dữ liệu hiện có nhưng không ghi đè báo cáo đã lưu trong hệ thống — chỉ hiển thị cho lần chạy này.
 </p>
 
 {% if live_result %}
   <div class="card">
-    <strong>Kết quả chạy live (không lưu vào repo):</strong>
+    <strong>Kết quả vừa chạy:</strong>
     {% if live_result.error %}
-      <p style="color:#ff6b6b;">Agent lỗi: {{ live_result.error }}</p>
+      <p style="color:var(--sn-critical);">Lỗi: {{ live_result.error }}</p>
     {% else %}
       {% set m = live_result.meta %}
-      <p>Xong: {{ m.findings }} findings (high={{ m.by_severity.high }} medium={{ m.by_severity.medium }} low={{ m.by_severity.low }}) ·
-      llm={{ "mock" if m.llm_mock else "REAL" }} · dropped_no_evidence={{ m.dropped_no_evidence }}</p>
+      <p>{{ m.findings }} phát hiện (nghiêm trọng={{ m.by_severity.high }} trung bình={{ m.by_severity.medium }} thấp={{ m.by_severity.low }}) ·
+      {{ "mock" if m.llm_mock else "real" }} · bỏ qua vì thiếu bằng chứng: {{ m.dropped_no_evidence }}</p>
+      {% if live_result.run_stats %}
+      <p style="color:var(--sn-muted); font-size:.8rem;">
+        Lần chạy này: {{ live_result.run_stats.calls }} lượt gọi AI · ${{ "%.4f"|format(live_result.run_stats.cost) }} · {{ live_result.run_stats.latency_ms }} ms
+      </p>
+      {% endif %}
       {% for f in live_result.findings %}
       <details>
         <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
@@ -41,11 +90,11 @@ Evidence-based: mỗi finding trỏ <code>source_ids</code> về DB, không bị
   </div>
 {% endif %}
 
-<h3>Báo cáo đã commit trong repo (<code>analysis_report.jsonl</code>)</h3>
+<h3>Báo cáo đã lưu trong hệ thống</h3>
 {% if empty_status %}
-  <p>Báo cáo hiện tại: <code>no_findings</code> — {{ empty_status }}</p>
+  <p>Chưa có phát hiện nào được ghi nhận.</p>
 {% elif findings %}
-  <p><strong>{{ findings|length }} findings</strong> trong <code>analysis_report.jsonl</code>:</p>
+  <p><strong>{{ findings|length }} phát hiện</strong> đã lưu:</p>
   {% for f in findings %}
   <details>
     <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
@@ -56,16 +105,16 @@ Evidence-based: mỗi finding trỏ <code>source_ids</code> về DB, không bị
   </details>
   {% endfor %}
 {% else %}
-  <p>Chưa có báo cáo — bấm "Chạy Agent ngay" ở trên.</p>
+  <p>Chưa có báo cáo — bấm "Phân tích ngay" ở trên.</p>
 {% endif %}
 
-<hr style="border-color:#2a2d34; margin:1.5rem 0;">
-<h3>Kết quả test (happy / empty / injection)</h3>
+<hr style="border-color:var(--sn-grid); margin:1.5rem 0;">
+<h3>Kiểm thử tự động</h3>
 <form method="post" action="/agent/test">
-  <button type="submit">🧪 Chạy bộ test</button>
+  <button type="submit">🧪 Chạy bộ kiểm thử</button>
 </form>
 {% if test_output %}
 <pre>{{ test_output.output }}</pre>
-{% if test_output.ok %}<p style="color:#5fd58a;">Tất cả test PASS.</p>{% else %}<p style="color:#ff6b6b;">Có test FAIL — xem log trên.</p>{% endif %}
+{% if test_output.ok %}<p style="color:var(--sn-good);">Tất cả kiểm thử PASS.</p>{% else %}<p style="color:var(--sn-critical);">Có kiểm thử FAIL — xem log trên.</p>{% endif %}
 {% endif %}
 {% endblock %}

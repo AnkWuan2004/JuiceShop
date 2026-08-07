@@ -1,27 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Tuần 2 — Kho tri thức &amp; tìm kiếm</h2>
-<p>{{ docs|length }} tài liệu trong <code>rag/data/</code> (OWASP Top 10, cheatsheet, CVE, ví dụ lỗ hổng Juice Shop).</p>
+<h2>Kho tri thức &amp; tìm kiếm</h2>
+<p>{{ docs|length }} tài liệu tham chiếu (OWASP Top 10, cheatsheet, CVE, ví dụ khai thác thực tế).</p>
 <details>
   <summary>Danh sách tài liệu</summary>
   <ul>{% for d in docs %}<li><code>{{ d }}</code></li>{% endfor %}</ul>
 </details>
 
+<div class="tabs">
+  <a href="/knowledge?mode=keyword&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'keyword' else '' }}">🔤 Từ khóa (BM25)</a>
+  <a href="/knowledge?mode=semantic&amp;q={{ q }}&amp;top_k={{ top_k }}&amp;min_score={{ min_score }}" class="{{ 'active' if mode == 'semantic' else '' }}">🧠 Ngữ nghĩa (vector)</a>
+</div>
+
 <form class="inline" method="get" action="/knowledge">
-  <input type="text" name="q" value="{{ q }}" placeholder="Thử: 'SQL Injection' hoặc 'XSS'" style="min-width:280px;">
-  <button type="submit">🔎 Tìm kiếm</button>
+  <input type="hidden" name="mode" value="{{ mode }}">
+  <input type="text" name="q" value="{{ q }}" placeholder="Thử: 'SQL Injection' hoặc 'làm sao chặn XSS'" style="min-width:260px;">
+  <label>Top K <input type="number" name="top_k" value="{{ top_k }}" min="1" max="20" style="width:70px;"></label>
+  <label>Ngưỡng tương đồng tối thiểu <input type="number" name="min_score" value="{{ min_score }}" min="0" max="1" step="0.05" style="width:80px;"></label>
+  <button type="submit">Tìm kiếm</button>
 </form>
+<p style="color:var(--sn-muted); font-size:.82rem;">
+  <strong>Từ khóa</strong> khớp đúng thuật ngữ xuất hiện trong tài liệu. <strong>Ngữ nghĩa</strong> hiểu ý câu hỏi
+  ngay cả khi không trùng từ khóa (vector similarity{{ ' — ' ~ backend if backend and mode == 'semantic' else '' }}).
+</p>
 
 {% if error %}
-<p style="color:#ff6b6b;">{{ error }}</p>
+<p style="color:var(--sn-critical);">{{ error }}</p>
 {% elif hits %}
   {% for h in hits %}
   <div class="card">
-    <strong>{{ loop.index }}. <code>{{ h.id }}</code></strong> — score={{ "%.3f"|format(h.score) }}
+    <strong>{{ loop.index }}. <code>{{ h.id }}</code></strong> — độ tương đồng {{ "%.3f"|format(h.score) }}
     <pre>{{ h.text[:400] }}</pre>
   </div>
   {% endfor %}
 {% elif q %}
-<p>Không có kết quả — kiểm tra đã chạy <code>python rag/ingest.py</code> chưa.</p>
+<p>Không có kết quả trên ngưỡng đã chọn — thử hạ ngưỡng tương đồng hoặc đổi chế độ tìm kiếm.</p>
 {% endif %}
 {% endblock %}

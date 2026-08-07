@@ -5,6 +5,7 @@ MOCK khi không có OPENAI_API_KEY — demo offline deterministic JSON.
 """
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import json
 import os
@@ -15,6 +16,21 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 TRACE_DIR = ROOT / "data-lake" / "traces"
+
+# Bộ đệm trace theo request (contextvar — an toàn giữa các request đồng thời), dùng để
+# tính cost/latency của MỘT lần gọi (vd 1 lần "Chạy Agent") mà không cần đọc lại file.
+_trace_buffer: contextvars.ContextVar[list | None] = contextvars.ContextVar("trace_buffer", default=None)
+
+
+def start_trace_capture() -> None:
+    """Bắt đầu thu thập trace cho request hiện tại. Gọi trước khi chạy agent."""
+    _trace_buffer.set([])
+
+
+def collect_traces() -> list[dict]:
+    """Lấy các trace đã ghi từ lần start_trace_capture() gần nhất."""
+    buf = _trace_buffer.get()
+    return list(buf) if buf is not None else []
 
 
 def _load_dotenv() -> None:
@@ -75,6 +91,9 @@ def write_trace(agent: str, event: str, data: Any) -> Path:
     path = TRACE_DIR / f"{agent}_{datetime.now().strftime('%Y%m%d')}.jsonl"
     safe = _redact_obj(data)
     record = {"ts": utc_now(), "agent": agent, "event": event, "data": safe}
+    buf = _trace_buffer.get()
+    if buf is not None:
+        buf.append(record)
     try:
         ensure_trace_dir()
         with open(path, "a", encoding="utf-8") as f:

@@ -1,14 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Tiêu chí hoàn thành (theo PDF gốc mentor)</h2>
-{% for week, item, ok, note in checks %}
-<div class="check-line">{{ "✅" if ok else "❌" }} <strong>[{{ week }}]</strong> {{ item }}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<code>{{ note }}</code>
+<h2>Tổng quan hệ thống</h2>
+<p style="color:var(--sn-ink-2);">Số liệu dưới đây đọc trực tiếp từ dữ liệu hiện có trong hệ thống tại thời điểm bạn mở trang này.</p>
+
+<div class="tile-row">
+  {% for t in tiles %}{{ t|safe }}{% endfor %}
+</div>
+
+<div class="row">
+  <div class="card">
+    <strong>Phân bố theo mức độ nghiêm trọng</strong>
+    <div style="margin-top:.75rem;">{{ sev_chart|safe }}</div>
+  </div>
+  <div class="card">
+    <strong>Phân bố theo công cụ quét</strong>
+    <div style="margin-top:.75rem;">{{ tool_chart|safe }}</div>
+  </div>
+</div>
+
+{% for group_name, items in capability_groups %}
+<div class="cap-group">
+  <h3>{{ group_name }}</h3>
+  {% for item, ok, note in items %}
+  <div class="check-line">{{ "✅" if ok else "⚠️" }} {{ item }}<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<code>{{ note }}</code>
+  </div>
+  {% endfor %}
 </div>
 {% endfor %}
-
-<div class="card" style="margin-top:1.5rem;">
-  <strong>Phạm vi mở rộng đã làm thêm (không bắt buộc theo đề):</strong> GraphRAG, MCP/A2A agent IAM,
-  LangSmith spans, vLLM gateway stub, Multi-agent Supervisor. Đề gốc chỉ yêu cầu 1 AI Agent chính.
-</div>
 {% endblock %}
