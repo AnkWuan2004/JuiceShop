@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Tuần 1 — Quét bảo mật &amp; CI</h2>
+<div class="row">
+  <div class="card">
+    <strong>Semgrep (SAST)</strong>
+    {% if semgrep_exists %}
+      <p>✅ Có kết quả Semgrep thật: <code>{{ semgrep_path }}</code></p>
+    {% else %}
+      <p>⚠️ Chưa có kết quả Semgrep chạy thật cục bộ — CI GitHub Actions có chạy Semgrep thật mỗi push/PR.</p>
+    {% endif %}
+    <pre>semgrep scan --config=p/default --json -o data-lake/reports/semgrep-report.json juice-shop</pre>
+  </div>
+  <div class="card">
+    <strong>OWASP ZAP (DAST)</strong>
+    {% if zap_exists %}
+      <p>✅ Có báo cáo ZAP thật từ CI: <code>{{ zap_path }}</code></p>
+      {% if zap_alerts is not none %}<p>{{ zap_alerts }} alert groups từ lần chạy CI thật (zaproxy/action-baseline).</p>{% endif %}
+    {% else %}
+      <p>⚠️ Chưa có báo cáo ZAP thật.</p>
+    {% endif %}
+  </div>
+</div>
+
+<h3>Dữ liệu đã nạp vào <code>vuln_data.db</code></h3>
+{% if rows %}
+<table>
+  <tr><th>id</th><th>tool</th><th>severity</th><th>name</th><th>path_or_url</th></tr>
+  {% for r in rows %}
+  <tr><td>{{ r.id }}</td><td>{{ r.tool }}</td><td>{{ r.severity }}</td><td>{{ r.name }}</td><td>{{ r.path_or_url }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>DB rỗng — chạy <code>python scripts/seed_sample_reports.py</code> hoặc nạp scan thật bằng <code>parse_results.py</code>.</p>
+{% endif %}
+
+<details>
+  <summary>Tài liệu endpoint chính (docs/notes/ATTACK_SURFACE.md)</summary>
+  {% if attack_surface %}<pre>{{ attack_surface }}</pre>{% else %}<p>Chưa có file.</p>{% endif %}
+</details>
+{% endblock %}

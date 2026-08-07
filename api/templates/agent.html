@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Tuần 3 — Security Analysis Agent</h2>
+<p>Đọc <code>vuln_data.db</code> → gộp trùng → phân loại severity → giải thích + đề xuất fix (LLM grounded trên RAG) → JSONL.
+Evidence-based: mỗi finding trỏ <code>source_ids</code> về DB, không bịa.</p>
+
+<details>
+  <summary>System Prompt (lưu trong repo)</summary>
+  {% if prompt_text %}<pre>{{ prompt_text }}</pre>{% endif %}
+</details>
+
+<form class="inline" method="post" action="/agent/run">
+  <label>Giới hạn số finding: <input type="number" name="max_n" value="8" min="3" max="30"></label>
+  <button type="submit">▶️ Chạy Agent ngay</button>
+  <span>LLM mode hiện tại: <strong>{{ "REAL" if llm_real else "MOCK" }}</strong></span>
+</form>
+<p style="color:#9aa0aa; font-size:.85rem;">
+  Lưu ý: trên Vercel nút này chạy Agent thật trên dữ liệu hiện có, nhưng <strong>không ghi đè</strong>
+  <code>analysis_report.jsonl</code> trong repo (serverless không có filesystem ghi bền vững) — kết quả bên dưới chỉ hiển thị cho lần bấm này.
+</p>
+
+{% if live_result %}
+  <div class="card">
+    <strong>Kết quả chạy live (không lưu vào repo):</strong>
+    {% if live_result.error %}
+      <p style="color:#ff6b6b;">Agent lỗi: {{ live_result.error }}</p>
+    {% else %}
+      {% set m = live_result.meta %}
+      <p>Xong: {{ m.findings }} findings (high={{ m.by_severity.high }} medium={{ m.by_severity.medium }} low={{ m.by_severity.low }}) ·
+      llm={{ "mock" if m.llm_mock else "REAL" }} · dropped_no_evidence={{ m.dropped_no_evidence }}</p>
+      {% for f in live_result.findings %}
+      <details>
+        <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
+        <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
+        <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+        <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
+        <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
+      </details>
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endif %}
+
+<h3>Báo cáo đã commit trong repo (<code>analysis_report.jsonl</code>)</h3>
+{% if empty_status %}
+  <p>Báo cáo hiện tại: <code>no_findings</code> — {{ empty_status }}</p>
+{% elif findings %}
+  <p><strong>{{ findings|length }} findings</strong> trong <code>analysis_report.jsonl</code>:</p>
+  {% for f in findings %}
+  <details>
+    <summary class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }} — {{ f.location }}</summary>
+    <p><strong>Mức độ:</strong> {{ f.severity }} · <strong>Tin cậy:</strong> {{ f.confidence }}</p>
+    <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+    <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
+    <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
+  </details>
+  {% endfor %}
+{% else %}
+  <p>Chưa có báo cáo — bấm "Chạy Agent ngay" ở trên.</p>
+{% endif %}
+
+<hr style="border-color:#2a2d34; margin:1.5rem 0;">
+<h3>Kết quả test (happy / empty / injection)</h3>
+<form method="post" action="/agent/test">
+  <button type="submit">🧪 Chạy bộ test</button>
+</form>
+{% if test_output %}
+<pre>{{ test_output.output }}</pre>
+{% if test_output.ok %}<p style="color:#5fd58a;">Tất cả test PASS.</p>{% else %}<p style="color:#ff6b6b;">Có test FAIL — xem log trên.</p>{% endif %}
+{% endif %}
+{% endblock %}

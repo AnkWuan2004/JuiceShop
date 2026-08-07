@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Tuần 2 — Kho tri thức &amp; tìm kiếm</h2>
+<p>{{ docs|length }} tài liệu trong <code>rag/data/</code> (OWASP Top 10, cheatsheet, CVE, ví dụ lỗ hổng Juice Shop).</p>
+<details>
+  <summary>Danh sách tài liệu</summary>
+  <ul>{% for d in docs %}<li><code>{{ d }}</code></li>{% endfor %}</ul>
+</details>
+
+<form class="inline" method="get" action="/knowledge">
+  <input type="text" name="q" value="{{ q }}" placeholder="Thử: 'SQL Injection' hoặc 'XSS'" style="min-width:280px;">
+  <button type="submit">🔎 Tìm kiếm</button>
+</form>
+
+{% if error %}
+<p style="color:#ff6b6b;">{{ error }}</p>
+{% elif hits %}
+  {% for h in hits %}
+  <div class="card">
+    <strong>{{ loop.index }}. <code>{{ h.id }}</code></strong> — score={{ "%.3f"|format(h.score) }}
+    <pre>{{ h.text[:400] }}</pre>
+  </div>
+  {% endfor %}
+{% elif q %}
+<p>Không có kết quả — kiểm tra đã chạy <code>python rag/ingest.py</code> chưa.</p>
+{% endif %}
+{% endblock %}

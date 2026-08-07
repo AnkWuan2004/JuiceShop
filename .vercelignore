@@ -1,0 +1,10 @@
+# Không cần cho FastAPI live demo (api/index.py) — loại để giảm dung lượng deploy & cold start.
+.venv/
+juice-shop/
+kong/
+docker-compose*.yml
+.devcontainer/
+__pycache__/
+*.pyc
+*.pdf
+data-lake/traces/

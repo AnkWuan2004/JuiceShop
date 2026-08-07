@@ -106,6 +106,25 @@ python scripts/demo_analysis_agent.py     # seed → analyze → http://127.0.0.
 # hoặc: python scripts/demo_analysis_server.py
 ```
 
+## Live demo — Vercel (FastAPI)
+
+Dashboard demo Tuần 1-3 chạy bằng FastAPI (`api/index.py`), thay cho Streamlit cũ — Streamlit
+cần một server sống liên tục nên không deploy được lên Vercel serverless.
+
+```bash
+pip install -r requirements.txt
+uvicorn api.index:app --reload    # http://127.0.0.1:8000
+```
+
+Deploy lên Vercel: import repo GitHub này vào Vercel (Zero Config — `vercel.json` đã có sẵn rewrite
+`/* → /api/index`). Đặt biến môi trường `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` trong
+Project Settings → Environment Variables nếu muốn chạy LLM thật (bỏ trống → MOCK offline).
+
+Do Vercel serverless không có filesystem ghi bền vững, nút "Chạy Agent ngay" chạy Agent thật trên dữ
+liệu hiện có nhưng không ghi đè `analysis_report.jsonl` trong repo — kết quả chỉ hiển thị cho lần bấm
+đó. Toàn bộ dữ liệu hiển thị khác (`vuln_data.db`, `rag/store/*`, báo cáo đã commit) đọc thẳng từ
+snapshot có sẵn trong repo.
+
 ## Tiến độ (12 tuần)
 
 | Tuần | Nội dung | Trạng thái |

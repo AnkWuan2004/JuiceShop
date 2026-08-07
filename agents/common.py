@@ -70,13 +70,17 @@ def _redact_obj(obj: Any) -> Any:
 
 
 def write_trace(agent: str, event: str, data: Any) -> Path:
-    """Ghi trace JSONL vào data-lake/traces/ — PII redacted trước khi persist."""
-    ensure_trace_dir()
+    """Ghi trace JSONL vào data-lake/traces/ — PII redacted trước khi persist.
+    Fail-safe trên filesystem read-only (VD: Vercel serverless) — bỏ qua thay vì crash."""
     path = TRACE_DIR / f"{agent}_{datetime.now().strftime('%Y%m%d')}.jsonl"
     safe = _redact_obj(data)
     record = {"ts": utc_now(), "agent": agent, "event": event, "data": safe}
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    try:
+        ensure_trace_dir()
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
     try:
         from observability import emit_langsmith_span
 
