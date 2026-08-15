@@ -2,8 +2,8 @@
 # Nguyên tắc: identity (apikey) ≠ capability (ACL + path policy). Fail closed.
 #
 # Consumers:
-#   recon-agent   (recon-key-demo)   → group get-only  → chỉ GET đọc
-#   exploit-agent (exploit-key-demo) → group exploit   → GET + POST (+ rate-limit)
+#   recon-agent   (recon-key-demo)   → group get-only  → chỉ GET đọc (rate-limit 60/phút)
+#   exploit-agent (exploit-key-demo) → group exploit   → GET + POST (rate-limit 60/phút đọc, 20/phút ghi)
 #
 # Path deny: mọi request bắt đầu /rest/admin → 403 (pre-function, hard control)
 
@@ -43,6 +43,11 @@ services:
             - get-only
             - exploit
           hide_groups_header: true
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
       - name: pre-function
         config:
           access:

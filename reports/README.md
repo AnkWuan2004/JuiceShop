@@ -22,6 +22,7 @@ Báo cáo tiến độ theo tuần cho Project Sentinel. Quy ước:
 | 1 | [`week-1/README.md`](week-1/README.md) | Chưa có report 1-trang riêng — trỏ tới artefact gốc |
 | 2 | [`week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md`](week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md) | + [`gateway-agent-iam.md`](week-2/gateway-agent-iam.md), [`plan.md`](week-2/plan.md) |
 | 3 | [`week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md`](week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md) | + [`details.md`](week-3/details.md) (bản chi tiết cũ), [`plan.md`](week-3/plan.md) |
+| 4 | [`week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md`](week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md) | Nền Gateway/IAM đã làm sớm ở "week-2" (xem ghi chú lệch số tuần); report này chốt phần hoàn thiện |
 
 Xem thêm: [`PROGRESS.md`](PROGRESS.md) — nhật ký tiến độ toàn dự án (đề gốc **6 tuần**, cập nhật liên tục).
 [`gap-analysis-week1-3.md`](gap-analysis-week1-3.md) — đối chiếu Tuần 1-3 với đề bài gốc.
