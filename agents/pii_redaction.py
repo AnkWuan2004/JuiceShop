@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Tuần 9 — PII redaction: email / phone / SSN-like trước khi ghi log hoặc RAG.
+Che dữ liệu nhạy cảm trước khi gửi tới LLM hoặc ghi log:
+email / phone / SSN / token (Bearer, JWT) / API key / password.
 """
 from __future__ import annotations
 
@@ -13,12 +14,27 @@ EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 PHONE_RE = re.compile(r"\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b")
 # SSN-like ###-##-####
 SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+# JWT: header.payload.signature (base64url x3)
+JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b")
+# Authorization: Bearer <token>
+BEARER_RE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9\-_.=]+")
+# key: value / key=value cho token / api key / password (giá trị không chứa khoảng trắng)
+TOKEN_KV_RE = re.compile(r"(?i)\btoken\s*[:=]\s*[\"']?[A-Za-z0-9\-_.]{6,}[\"']?")
+APIKEY_KV_RE = re.compile(r"(?i)\bapi[_-]?key\s*[:=]\s*[\"']?[A-Za-z0-9\-_.]{6,}[\"']?")
+APIKEY_PREFIX_RE = re.compile(r"\bsk-[A-Za-z0-9]{10,}\b")
+PASSWORD_KV_RE = re.compile(r"(?i)\bpassword\s*[:=]\s*[\"']?\S+")
 
 
 def redact(text: str) -> str:
     text = EMAIL_RE.sub("[REDACTED_EMAIL]", text)
     text = PHONE_RE.sub("[REDACTED_PHONE]", text)
     text = SSN_RE.sub("[REDACTED_SSN]", text)
+    text = JWT_RE.sub("[REDACTED_TOKEN]", text)
+    text = BEARER_RE.sub("[REDACTED_TOKEN]", text)
+    text = TOKEN_KV_RE.sub("[REDACTED_TOKEN]", text)
+    text = APIKEY_PREFIX_RE.sub("[REDACTED_APIKEY]", text)
+    text = APIKEY_KV_RE.sub("[REDACTED_APIKEY]", text)
+    text = PASSWORD_KV_RE.sub("[REDACTED_PASSWORD]", text)
     return text
 
 
@@ -30,7 +46,8 @@ def redact_file(src: Path, dst: Path) -> None:
 def demo() -> None:
     sample = (
         "User jane.doe@juiceshop.local phone 555-123-4567 SSN 123-45-6789 "
-        "bought Apple Juice."
+        "bought Apple Juice. Authorization: Bearer sk-abc123def456xyz "
+        "api_key=abcd1234efgh5678 password=Sup3rSecret!"
     )
     after = redact(sample)
     print("BEFORE:", sample)

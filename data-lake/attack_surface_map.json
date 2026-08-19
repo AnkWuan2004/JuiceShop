@@ -2,17 +2,6 @@
   "source": "vuln_data.db+baseline",
   "endpoints": [
     {
-      "path": "/",
-      "method": "GET/POST",
-      "risk": "high",
-      "issue": "Absence of Anti-CSRF Tokens; Absence of Anti-CSRF Tokens; Storable but Non-Cacheable Content",
-      "cve_related": [],
-      "sources": [
-        "OWASP ZAP (DAST)"
-      ],
-      "count": 10
-    },
-    {
       "path": "/api/Users",
       "method": "POST",
       "risk": "high",
@@ -26,29 +15,129 @@
       "count": 0
     },
     {
+      "path": "/ftp/eastere.gg",
+      "method": "GET",
+      "risk": "high",
+      "issue": "Content Security Policy (CSP) Header Not Set",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 1
+    },
+    {
+      "path": "/ftp/encrypt.pyc",
+      "method": "GET",
+      "risk": "high",
+      "issue": "Content Security Policy (CSP) Header Not Set",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 1
+    },
+    {
       "path": "/rest/products/search",
       "method": "GET",
       "risk": "high",
-      "issue": "Cross Site Scripting (Reflected); SQL Injection; javascript.lang.security.audit.sqli.node-sqli",
+      "issue": "SQLi / XSS search",
       "cve_related": [
         "CWE-89"
       ],
       "sources": [
-        "OWASP ZAP (DAST)",
-        "Semgrep (SAST)"
+        "baseline"
+      ],
+      "count": 0
+    },
+    {
+      "path": "/sitemap.xml",
+      "method": "GET/POST",
+      "risk": "high",
+      "issue": "Storable but Non-Cacheable Content; Modern Web Application; Timestamp Disclosure - Unix",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 9
+    },
+    {
+      "path": "/",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Storable but Non-Cacheable Content; Modern Web Application; Modern Web Application",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
       ],
       "count": 11
     },
     {
       "path": "/api/Feedbacks",
+      "method": "POST",
+      "risk": "medium",
+      "issue": "Stored XSS",
+      "cve_related": [
+        "CWE-79"
+      ],
+      "sources": [
+        "baseline"
+      ],
+      "count": 0
+    },
+    {
+      "path": "/assets/public/favicon_js.ico",
       "method": "GET/POST",
       "risk": "medium",
-      "issue": "javascript.express.security.audit.xss.pug.explicit-unescape.template-explicit-unescape",
+      "issue": "Storable but Non-Cacheable Content; Cross-Domain Misconfiguration",
       "cve_related": [],
       "sources": [
-        "Semgrep (SAST)"
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 2
+    },
+    {
+      "path": "/chunk-5K74DZ2F.js",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Storable but Non-Cacheable Content; Deprecated Feature Policy Header Set; Cross-Domain Misconfiguration",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 3
+    },
+    {
+      "path": "/chunk-PX7UKXVL.js",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Deprecated Feature Policy Header Set",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
       ],
       "count": 1
+    },
+    {
+      "path": "/chunk-VS3A3LTT.js",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Deprecated Feature Policy Header Set",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 1
+    },
+    {
+      "path": "/ftp",
+      "method": "GET",
+      "risk": "medium",
+      "issue": "Cross-Origin-Opener-Policy Header Missing or Invalid; Cross-Origin-Embedder-Policy Header Missing or Invalid",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 2
     },
     {
       "path": "/ftp/",
@@ -62,6 +151,28 @@
         "baseline"
       ],
       "count": 0
+    },
+    {
+      "path": "/juice-shop/build/routes/fileServer.js:69:18",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Modern Web Application; Cross-Origin-Embedder-Policy Header Missing or Invalid",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 2
+    },
+    {
+      "path": "/juice-shop/node_modules/express/lib/router/index.js:286:9",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Modern Web Application; Cross-Origin-Opener-Policy Header Missing or Invalid",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 2
     },
     {
       "path": "/main.js",
@@ -102,15 +213,26 @@
       "path": "/robots.txt",
       "method": "GET/POST",
       "risk": "medium",
-      "issue": "Storable and Cacheable Content",
+      "issue": "Storable and Cacheable Content; Cross-Domain Misconfiguration",
       "cve_related": [],
       "sources": [
         "OWASP ZAP (DAST)"
       ],
-      "count": 1
+      "count": 2
+    },
+    {
+      "path": "/styles.css",
+      "method": "GET/POST",
+      "risk": "medium",
+      "issue": "Storable but Non-Cacheable Content; Timestamp Disclosure - Unix",
+      "cve_related": [],
+      "sources": [
+        "OWASP ZAP (DAST)"
+      ],
+      "count": 2
     }
   ],
-  "summary": "DB-driven map: 9 endpoints from 40 vuln rows + baseline.",
+  "summary": "DB-driven map: 20 endpoints from 40 vuln rows + baseline.",
   "vuln_rows_used": 40,
   "llm_enrich": true,
   "llm_summary": "Merged 1 endpoints from DB/vulns (mock enrich).",

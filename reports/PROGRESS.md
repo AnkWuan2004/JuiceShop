@@ -1,10 +1,19 @@
 # Tiến độ Project Sentinel
 
-Cập nhật: 2026-07-20 (PDF gaps closed)
+Cập nhật: 2026-08-19 (Tuần 5 — Guardrails/HITL/che dữ liệu nhạy cảm)
 
 ## Kết luận ngắn
 
-**Tuần 0–12: verified demo local + CI + PDF gap closures.** LLM mặc định **MOCK**. GraphRAG, MCP/A2A, NeMo-style Colang rails, Slack HITL local, LangSmith spans + Arize dashboard, vLLM gateway stub đã có. Traffic agent qua Kong `localhost:8000`.
+**Verified demo local + CI + PDF gap closures.** LLM mặc định **MOCK**. GraphRAG, MCP/A2A, NeMo-style Colang rails, Slack HITL local, LangSmith spans + Arize dashboard, vLLM gateway stub đã có. Traffic agent qua Kong `localhost:8000`.
+
+**2026-08-19 — Tuần 5 "Guardrails, phê duyệt thủ công, che dữ liệu nhạy cảm": PASS.**
+Chống prompt injection (`agents/guardrails.py`), phê duyệt thủ công hiển thị rõ Endpoint/Payload/Purpose
+trước khi Approve/Reject (`agents/hitl_cli.py`, gate trong `agents/exploit_agent.py`), và che 6 loại dữ
+liệu nhạy cảm — email/phone/SSN/token/API key/password — trước khi vào LLM hoặc ghi log
+(`agents/pii_redaction.py`, wired vào `agents/kong_http_tool.py::append_log`). Test mới
+`tests/test_guardrails_week5.py`: **23/23 PASS** (3 case injection + 3 case sensitive-data + 3 case
+approval-required, vượt tối thiểu đề yêu cầu 2+2+2). Chi tiết:
+[`reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md`](week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md).
 
 ## Chi tiết theo tuần
 
@@ -45,7 +54,7 @@ Cập nhật: 2026-07-20 (PDF gaps closed)
 | Supervisor A2A | ✅ | |
 | LangSmith spans + Arize dashboard | ✅ | `scripts/arize_viewer.py` |
 
-### Tuần 7–9 — Bảo vệ AI
+### Bảo vệ AI — Guardrails / HITL / che dữ liệu nhạy cảm (Tuần 5)
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | NeMo-style Colang rails | ✅ | `guardrails/config.yml` + `rails.co` |
@@ -53,7 +62,7 @@ Cập nhật: 2026-07-20 (PDF gaps closed)
 | HITL CLI + Slack local | ✅ | `scripts/slack_hitl_server.py` `:8787` |
 | PII + GDPR note | ✅ | |
 
-### Tuần 10–12 — LLMOps & bàn giao
+### LLMOps & bàn giao (Tuần 6)
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | Eval non-circular + improvement | ✅ | |

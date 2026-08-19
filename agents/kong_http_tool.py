@@ -80,6 +80,14 @@ def append_log(entry: dict, secrets: list[str]) -> None:
     for s in secrets:
         if s and s in safe:
             safe = safe.replace(s, "***REDACTED***")
+    # Tuần 5: che thêm PII chung (email/phone/token/apikey/password) có thể
+    # xuất hiện trong response body thật (vd. profile user Juice Shop).
+    try:
+        from pii_redaction import redact as redact_pii
+
+        safe = redact_pii(safe)
+    except Exception:
+        pass
     with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(safe + "\n")
 

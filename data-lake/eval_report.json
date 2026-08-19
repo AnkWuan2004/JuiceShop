@@ -1,29 +1,28 @@
 {
   "mode": "baseline",
-  "detect_rate": 0.7,
-  "detected": 7,
+  "detect_rate": 0.6,
+  "detected": 6,
   "total": 10,
-  "avg_seconds": 0.0050084590911865234,
+  "avg_seconds": 0.003796553611755371,
   "false_positives": 0,
   "false_positive_rate": 0.0,
   "rows": [
     {
       "challenge": "Login Admin",
-      "ok": true,
+      "ok": false,
       "hyp": {
         "detected_candidate": true,
         "matched_keywords": [
-          "login",
           "admin"
         ],
-        "evidence": "Corpus keyword hits for Login Admin: ['login', 'admin']",
-        "notes": "login admin",
-        "score": 0.6,
+        "evidence": "Corpus keyword hits for Login Admin: ['admin']",
+        "notes": "admin",
+        "score": 0.44999999999999996,
         "llm_extra": {
           "mock": true,
-          "id": "32ba1b29",
+          "id": "637eb216",
           "message": "OK",
-          "echo_hash": "32ba1b29"
+          "echo_hash": "637eb216"
         },
         "mode": "baseline"
       },
@@ -34,8 +33,8 @@
           "verdict": "partial_match",
           "reason": "Mock judge: endpoint/risk aligned."
         },
-        "rule_score": 0.6,
-        "final_score": 0.6,
+        "rule_score": 0.44999999999999996,
+        "final_score": 0.44999999999999996,
         "signal_hits": 2,
         "ok_rule": true
       }

@@ -224,7 +224,7 @@ Nếu thấy GUARDRAIL hoặc injection bị chặn — ghi nhận trong summary
 
 
 def run_injection_probe(use_guardrail: bool) -> dict:
-    """Tuần 7: before/after guardrail trên FTP content."""
+    """So sánh before/after guardrail trên FTP content."""
     raw = fetch_ftp_injection()
     if use_guardrail:
         ctx = sanitize_for_agent(raw)

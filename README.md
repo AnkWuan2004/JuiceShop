@@ -54,7 +54,7 @@ docker compose ps
 docker compose down
 ```
 
-Build từ source (chỉ khi sửa `juice-shop/`, VD Tuần 7):
+Build từ source (chỉ khi sửa file trong `juice-shop/`, vd. thêm fixture demo cho guardrails):
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.from-source.yml up -d --build
@@ -84,23 +84,6 @@ python scripts/finops_report.py
 ```
 
 API keys Kong demo: `recon-key-demo` (GET), `exploit-key-demo` (POST).
-
-## Tuần 2 — Gateway + Agent IAM (demo nhanh)
-
-Báo cáo: `reports/week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md` · Gateway/IAM: `reports/week-2/gateway-agent-iam.md` · Plan: `reports/week-2/plan.md`
-
-```bash
-docker compose up -d
-python tests/test_kong_iam.py              # 401 / 403 method / 403 path
-python tests/test_kong_rate_limit.py       # 429 trên write
-# terminal riêng:
-python agents/mcp_server.py
-python scripts/demo_mcp_a2a.py
-python agents/kong_http_tool.py --agent recon-agent --path "/rest/products/search?q=apple"
-python agents/recon_skeleton.py              # nền Attack Surface Map (tuần 4)
-```
-
-Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agent.
 
 ## Tuần 3 — Security Analysis Agent
 
@@ -142,30 +125,57 @@ liệu hiện có nhưng không ghi đè `analysis_report.jsonl` trong repo — 
 đó. Toàn bộ dữ liệu hiển thị khác (`vuln_data.db`, `rag/store/*`, báo cáo đã commit) đọc thẳng từ
 snapshot có sẵn trong repo.
 
+## Tuần 4 — API Gateway và kiểm thử request an toàn (demo nhanh)
+
+Báo cáo: `reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md` · Nền tảng Gateway/IAM: `reports/week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md`
+
+```bash
+docker compose up -d
+python tests/test_kong_iam.py              # 401 / 403 method / 403 path
+python tests/test_kong_rate_limit.py       # 429 trên write
+python tests/test_kong_rate_limit_read.py  # 429 trên read
+# terminal riêng:
+python agents/mcp_server.py
+python scripts/demo_mcp_a2a.py
+python agents/kong_http_tool.py --agent recon-agent --path "/rest/products/search?q=apple"
+python agents/exploit_agent.py --yes         # Agent đề xuất request → tool thực thi qua gateway
+```
+
+Allowlist client: `kong/allowlist.json`. Path `/rest/admin` bị deny mọi agent.
+
+## Tuần 5 — Guardrails, phê duyệt thủ công, che dữ liệu nhạy cảm
+
+Chống prompt injection (nội dung ứng dụng = dữ liệu không tin cậy), Human-in-the-Loop (Approve/Reject
+có hiển thị Endpoint/Payload/Purpose trước request nguy hiểm), và che Email/Phone/Token/API key/Password
+trước khi vào LLM hoặc log.
+
+Báo cáo: `reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md`
+
+```bash
+python tests/test_guardrails_week5.py       # 9 case: injection / sensitive-data / approval → 23/23 PASS
+python agents/recon_agent.py                # injection_before.json vs injection_after.json (guardrail)
+python agents/exploit_agent.py --yes          # demo HITL Approve → gửi request
+python agents/exploit_agent.py --reject-demo  # demo HITL Reject → chặn request
+python agents/pii_redaction.py --demo         # demo che email/phone/ssn/token/apikey/password
+```
+
+**Không có trên live demo Vercel** (xem mục Live demo phía trên): 3 cơ chế này nằm ở lớp agent CLI
+(`agents/recon_agent.py`, `agents/exploit_agent.py`, `agents/guardrails.py`, `agents/pii_redaction.py`),
+chưa nối vào route nào của `api/index.py`. Trang Vercel hiện chỉ phục vụ Security Analysis Agent của
+Tuần 3 (`/scan`, `/knowledge`, `/agent`) — muốn xem Tuần 5 phải chạy local bằng các lệnh trên.
+
 ## Tiến độ
 
-**Đề gốc mentor cấp là lộ trình 6 tuần** (`[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel.pdf`),
-không phải 12 tuần. Bảng dưới đây là **số thứ tự sprint nội bộ** của project (để theo dõi tiến độ
-code), không phải số tuần trong đề — hai cách đánh số **không khớp 1:1** (vd. sprint "2" bên dưới là
-nội dung Kong/IAM, tương ứng Tuần 4 của đề gốc; nội dung Tuần 2 thật của đề — chuẩn hóa + kho tri
-thức — nằm trong sprint "3"). Đối chiếu chi tiết Tuần 1-3: [`reports/gap-analysis-week1-3.md`](reports/gap-analysis-week1-3.md).
-Từ sprint 4 trở đi là phần **mở rộng tự làm thêm**, không nằm trong yêu cầu bắt buộc của đề 6 tuần.
+Bám theo đúng 6 tuần của đề (`[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel.pdf`):
 
-| Sprint | Nội dung | Trạng thái |
-|---|---|---|
-| 0 | Clone Juice Shop + Compose | ✅ Done |
-| 1 | SAST/DAST CI + parse + Attack Surface + seed reports | ✅ CI verified + demo |
-| 2 | Kong IAM + `test_kong_iam.py` + MCP stub | ✅ Verified demo |
-| 3 | RAG ingest / hybrid / retrieval eval + **Security Analysis Agent → JSONL** | ✅ 93→74 grounded · live demo Vercel · 13/13 test |
-| 4 | Recon Agent → Attack Surface Map | ✅ DB-driven + vs manual |
-| 5 | Fuzz Agent qua Kong rate-limit | ✅ Mutate-on-anomaly |
-| 6 | Multi-agent Supervisor + traces | ✅ File traces |
-| 7 | Indirect prompt injection + guardrails | ✅ Before/after artifacts |
-| 8 | HITL CLI approve/reject | ✅ Approve + reject demo |
-| 9 | PII redaction | ✅ In traces + GDPR note |
-| 10 | Eval pipeline 10 challenges | ✅ Non-circular + improve loop |
-| 11 | Full Compose + FinOps + Runbook | ✅ CSV FinOps |
-| 12 | PRD + Business Case | ✅ + DEMO_CHECKLIST |
+| Tuần | Nội dung (theo đề) | Trạng thái | Báo cáo |
+|---|---|---|---|
+| 1 | Chuẩn bị môi trường + quét bảo mật cơ bản | ✅ Done | [`week-1/README.md`](reports/week-1/README.md) |
+| 2 | Chuẩn hóa kết quả quét + xây kho tri thức | ✅ Done | [`gap-analysis-week1-3.md`](reports/gap-analysis-week1-3.md) § Tuần 2 |
+| 3 | Xây dựng Security Analysis Agent | ✅ Done — 13/13 test, live demo Vercel | [`week-3/2026-08-07_..._Week3.md`](reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md) |
+| 4 | API Gateway + kiểm thử request an toàn | ✅ Done — 13/13 tiêu chí PASS | [`week-4/2026-08-15_..._Week4.md`](reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md) |
+| 5 | Guardrails, phê duyệt thủ công, che dữ liệu nhạy cảm | ✅ Done — 23/23 test PASS | [`week-5/2026-08-19_..._Week5.md`](reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md) |
+| 6 | Tích hợp, đánh giá và thuyết trình | ⏳ Chưa làm | — |
 
 Chi tiết nhật ký: `reports/PROGRESS.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
 

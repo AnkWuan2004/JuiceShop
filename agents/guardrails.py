@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Tuần 7 — Guardrails NeMo-style: load guardrails/config.yml + rails.co (Colang).
-API giữ nguyên: check_input / sanitize_for_agent.
+Guardrails NeMo-style: load guardrails/config.yml + rails.co (Colang).
+API: check_input / sanitize_for_agent.
 """
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 # Recon vs Manual Attack Surface (Tuần 4)
 
-Agent endpoints: **9** | Manual note paths: **20**
+Agent endpoints: **20** | Manual note paths: **20**
 
 ## Overlap
 
@@ -18,8 +18,18 @@ Agent endpoints: **9** | Manual note paths: **20**
 | Path |
 |---|
 | `/` |
+| `/assets/public/favicon_js.ico` |
+| `/chunk-5K74DZ2F.js` |
+| `/chunk-PX7UKXVL.js` |
+| `/chunk-VS3A3LTT.js` |
+| `/ftp/eastere.gg` |
+| `/ftp/encrypt.pyc` |
+| `/juice-shop/build/routes/fileServer.js:69:18` |
+| `/juice-shop/node_modules/express/lib/router/index.js:286:9` |
 | `/main.js` |
 | `/robots.txt` |
+| `/sitemap.xml` |
+| `/styles.css` |
 
 ## Chỉ manual note
 
@@ -43,6 +53,6 @@ Agent endpoints: **9** | Manual note paths: **20**
 ## Kết luận
 
 - Overlap: 6
-- Agent-only: 3
+- Agent-only: 13
 - Manual-only: 14 (kỳ vọng — note thủ công rộng hơn DB sample)
 - Map source: `vuln_data.db+baseline`, vuln_rows=40

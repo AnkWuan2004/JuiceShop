@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tuần 8 — HITL: CLI + Slack-compatible server (SENTINEL_HITL=slack).
+HITL: CLI + Slack-compatible server (SENTINEL_HITL=slack).
 """
 from __future__ import annotations
 
@@ -13,13 +13,24 @@ ROOT = Path(__file__).resolve().parent.parent
 HITL_LOG = ROOT / "data-lake" / "hitl_decisions.jsonl"
 
 
-def _log(decision: str, title: str, details: str) -> None:
+def _log(
+    decision: str,
+    title: str,
+    details: str,
+    *,
+    endpoint: str | None = None,
+    payload: str | None = None,
+    purpose: str | None = None,
+) -> None:
     HITL_LOG.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "decision": decision,
         "title": title,
         "details_preview": details[:1000],
+        "endpoint": endpoint,
+        "payload_preview": (payload[:1000] if payload else None),
+        "purpose": purpose,
         "channel": os.environ.get("SENTINEL_HITL", "cli"),
     }
     with open(HITL_LOG, "a", encoding="utf-8") as f:
@@ -32,26 +43,39 @@ def request_approval(
     auto_approve: bool = False,
     *,
     auto_reject: bool = False,
+    endpoint: str | None = None,
+    payload: str | None = None,
+    purpose: str | None = None,
 ) -> bool:
     """
     Trả True nếu approve.
     auto_approve=True dùng cho demo/CI offline.
     auto_reject=True ghi reject mà không hỏi (Week 8 evidence).
     SENTINEL_HITL=slack → poll local Slack HITL server.
+
+    endpoint/payload/purpose (Tuần 5 PDF): khi có, hiển thị tách riêng 3 dòng
+    bắt buộc trước khi hỏi Approve/Reject, thay vì gộp chung trong `details`.
     """
     print("\n========== HITL APPROVAL ==========")
-    print(f"Title: {title}")
-    print(details[:2000])
+    print(f"Title   : {title}")
+    if endpoint is not None or payload is not None or purpose is not None:
+        print(f"Endpoint: {endpoint or '-'}")
+        print(f"Payload : {(payload or '-')[:1000]}")
+        print(f"Purpose : {purpose or '-'}")
+    else:
+        print(details[:2000])
     print("===================================")
+
+    log_kwargs = {"endpoint": endpoint, "payload": payload, "purpose": purpose}
 
     if auto_reject:
         print("[HITL] auto-reject (demo evidence)")
-        _log("reject", title, details)
+        _log("reject", title, details, **log_kwargs)
         return False
 
     if auto_approve:
         print("[HITL] auto-approve (--yes / demo mode)")
-        _log("approve", title, details)
+        _log("approve", title, details, **log_kwargs)
         return True
 
     channel = os.environ.get("SENTINEL_HITL", "cli").strip().lower()
@@ -61,7 +85,7 @@ def request_approval(
 
             decided = request_slack_approval(title, details)
             if decided is not None:
-                _log("approve" if decided else "reject", title, details)
+                _log("approve" if decided else "reject", title, details, **log_kwargs)
                 return decided
             print("[HITL] Slack path unavailable — falling back to CLI")
         except Exception as e:
@@ -72,7 +96,7 @@ def request_approval(
     except EOFError:
         ans = "n"
     ok = ans in ("y", "yes")
-    _log("approve" if ok else "reject", title, details)
+    _log("approve" if ok else "reject", title, details, **log_kwargs)
     print(f"[HITL] {'APPROVED' if ok else 'REJECTED'}")
     return ok
 

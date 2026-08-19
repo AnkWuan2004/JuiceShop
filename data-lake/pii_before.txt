@@ -1,1 +1,1 @@
-User jane.doe@juiceshop.local phone 555-123-4567 SSN 123-45-6789 bought Apple Juice.
+User jane.doe@juiceshop.local phone 555-123-4567 SSN 123-45-6789 bought Apple Juice. Authorization: Bearer sk-abc123def456xyz api_key=abcd1234efgh5678 password=Sup3rSecret!

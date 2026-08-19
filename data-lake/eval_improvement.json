@@ -1,7 +1,7 @@
 {
-  "baseline_detect_rate": 0.7,
+  "baseline_detect_rate": 0.6,
   "improved_detect_rate": 1.0,
-  "delta": 0.30000000000000004,
+  "delta": 0.4,
   "baseline_fp": 0.0,
   "improved_fp": 0.0
 }
