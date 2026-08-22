@@ -5,6 +5,7 @@ MOCK khi không có OPENAI_API_KEY — demo offline deterministic JSON.
 """
 from __future__ import annotations
 
+import concurrent.futures
 import contextvars
 import hashlib
 import json
@@ -237,36 +238,47 @@ class LLMClient:
     def _rest_chat(self, messages: list[dict]) -> str:
         """REST /chat/completions bằng requests — dùng khi không có package openai (vd OpenRouter).
         Timeout ngắn + không retry mặc định vì maxDuration=60s (vercel.json): timeout dài/nhiều retry
-        sẽ bị Vercel giết cứng (504 FUNCTION_INVOCATION_TIMEOUT) trước khi code kịp tự bắt lỗi."""
+        sẽ bị Vercel giết cứng (504 FUNCTION_INVOCATION_TIMEOUT) trước khi code kịp tự bắt lỗi.
+
+        Đã thử đặt requests.post(timeout=...) thẳng — vẫn bị 504 đúng 60s trên Vercel dù timeout đặt
+        45s, nhiều khả năng do OpenRouter giữ connection bằng keep-alive/chunk rời rạc trong lúc chờ
+        model sinh xong (mỗi lần có byte mới thì đồng hồ "read timeout" của requests bị reset, nên
+        không bao giờ kích hoạt dù tổng thời gian đã vượt xa timeout khai báo). Sửa: ép deadline theo
+        WALL-CLOCK thật bằng future.result(timeout=...) — bất kể request bên dưới có bị giữ kiểu gì,
+        thread gọi vẫn phải trả lại quyền điều khiển đúng hạn."""
         import requests  # type: ignore
 
         base = (self.base_url or "https://api.openai.com/v1").rstrip("/")
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        # Từng đoán "đang chạy trên Vercel" qua biến VERCEL để hạ timeout, nhưng vẫn bị 504 — biến đó
-        # có thể không được set như kỳ vọng cho Python runtime, nên timeout im lặng rơi về 180s và bị
-        # Vercel giết cứng ở giây 60 (maxDuration trong vercel.json) trước khi code kịp tự bắt lỗi.
-        # Bỏ hẳn cách đoán platform: mặc định LUÔN ngắn + không retry — an toàn cho cả Vercel (còn dư
-        # ~10-15s biên so với 60s) và local/CLI (45s vẫn quá đủ cho 1 lượt gọi DeepSeek, đo thực tế
-        # ~44s lúc chậm nhất). Ai cần chờ lâu hơn cho script CLI riêng thì tự set biến môi trường.
         default_timeout = "45"
         default_retries = "1"
         timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", default_timeout))
         retries = int(os.environ.get("SENTINEL_LLM_RETRIES", default_retries))
+
+        def _do_request() -> str:
+            resp = requests.post(
+                f"{base}/chat/completions",
+                headers=headers,
+                json={"model": self.model, "messages": messages, "temperature": 0.2},
+                timeout=timeout,
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"] or ""
+
         last_err: Exception | None = None
         for attempt in range(retries):
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
             try:
-                resp = requests.post(
-                    f"{base}/chat/completions",
-                    headers=headers,
-                    json={"model": self.model, "messages": messages, "temperature": 0.2},
-                    timeout=timeout,
-                )
-                resp.raise_for_status()
-                return resp.json()["choices"][0]["message"]["content"] or ""
-            except requests.exceptions.RequestException as e:  # timeout / conn / 5xx
+                future = executor.submit(_do_request)
+                return future.result(timeout=timeout)
+            except (requests.exceptions.RequestException, concurrent.futures.TimeoutError) as e:
                 last_err = e
                 if attempt < retries - 1:
                     time.sleep(2 * (attempt + 1))
+            finally:
+                # Không chờ thread nền (có thể vẫn đang bị OpenRouter giữ) — trả lại quyền điều khiển
+                # ngay cho caller đúng hạn deadline, thread bên dưới tự kết thúc/bị dọn sau.
+                executor.shutdown(wait=False)
         raise last_err  # type: ignore[misc]
 
     def _mock_response(self, system: str, user: str) -> str:
