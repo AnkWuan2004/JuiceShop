@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-08-19",
+  "method": "8 finding do nhom tu chon tu vuln_data.db (93 dong quet that: 51 Semgrep + 42 ZAP), tu doc raw scan row de tu danh gia doc lap (khong doc truoc explanation cua agent), roi doi chieu voi severity/grounding thuc te agent tra ve trong analysis_report.jsonl.",
+  "cases": [
+    {
+      "finding_id": "F014",
+      "name": "express-sequelize-injection (routes/search.ts)",
+      "ground_truth_severity": "high",
+      "ground_truth_note": "SQLi that trong endpoint search - da xac nhan khai thac song qua Kong that: query \"' OR '1'='1\" tra ve toan bo san pham khong loc (xem exploit_result.json 2026-08-19).",
+      "agent_severity": "high",
+      "agent_confidence": 0.6,
+      "verdict": "match"
+    },
+    {
+      "finding_id": "F013",
+      "name": "express-sequelize-injection (routes/login.ts)",
+      "ground_truth_severity": "high",
+      "ground_truth_note": "SQLi kinh dien cho phep bypass dang nhap admin (Juice Shop challenge quen thuoc).",
+      "agent_severity": "high",
+      "agent_confidence": 0.6,
+      "verdict": "match"
+    },
+    {
+      "finding_id": "F012",
+      "name": "remote-property-injection (routes/currentUser.ts)",
+      "ground_truth_severity": "high",
+      "ground_truth_note": "Mass-assignment/prototype-pollution qua field khong duoc whitelist - co the ghi de thuoc tinh he thong.",
+      "agent_severity": "high",
+      "agent_confidence": 0.6,
+      "verdict": "match"
+    },
+    {
+      "finding_id": "F001/F002/F005",
+      "name": "run-shell-injection (GitHub Actions workflows)",
+      "ground_truth_severity": "high",
+      "ground_truth_note": "Shell injection trong CI qua bien khong duoc quote (vd ten branch/PR title) - rui ro supply-chain thuc su, khong phai finding ve app dang chay nhung van la lo hong that trong repo.",
+      "agent_severity": "high",
+      "agent_confidence": 0.65,
+      "verdict": "match"
+    },
+    {
+      "finding_id": "F020/F026",
+      "name": "hardcoded-hmac-key / hardcoded-jwt-secret (lib/insecurity.ts)",
+      "ground_truth_severity": "high",
+      "ground_truth_note": "Secret ky JWT bi hardcode trong source - cho phep forge token/bypass xac thuc neu lo code. Tac dong thuc te tuong duong auth bypass, nen danh gia High.",
+      "agent_severity": "medium",
+      "agent_confidence": 0.5,
+      "verdict": "mismatch_underrated",
+      "gap_note": "Agent ke thua severity goc tu Semgrep (WARNING) qua unify_severity() ma chua co rule rieng nang muc cho pattern 'hardcoded secret dung de ky token' - nen co case dac biet nang severity len High cho nhom CWE-321/CWE-798."
+    },
+    {
+      "finding_id": "F010",
+      "name": "detected-generic-secret (data/static/users.yml)",
+      "ground_truth_severity": "medium",
+      "ground_truth_note": "File users.yml la fixture demo co y cua Juice Shop (tai khoan mau cho challenge), khong phai secret production bi lo that. Van dang ghi nhan (thoi quen xau, khong nen commit) nhung khong nghiem trong bang mot secret song.",
+      "agent_severity": "high",
+      "agent_confidence": 0.6,
+      "verdict": "mismatch_overrated",
+      "gap_note": "Semgrep + agent khong phan biet duoc 'secret trong fixture test co chu dich' voi 'secret production that' - can them ngu canh path (vd thu muc data/static/, test/, fixtures/) de giam severity hoac gan flag context truoc khi bao cao."
+    },
+    {
+      "finding_id": "F047/F048 (+ nhom Cross-Origin-*)",
+      "name": "Cross-Origin-Embedder/Opener-Policy Header Missing",
+      "ground_truth_severity": "low",
+      "ground_truth_note": "Thieu header best-practice, khong tu no khai thac duoc, dung muc Low la hop ly.",
+      "agent_severity": "low",
+      "agent_confidence": 0.3,
+      "verdict": "match"
+    },
+    {
+      "finding_id": "F049/F050 (+ nhom Timestamp Disclosure)",
+      "name": "Timestamp Disclosure - Unix",
+      "ground_truth_severity": "low",
+      "ground_truth_note": "Thong tin ro ri toi thieu (Unix timestamp trong response), gan nhu noise, dung muc Low.",
+      "agent_severity": "low",
+      "agent_confidence": 0.3,
+      "verdict": "match"
+    }
+  ],
+  "summary": {
+    "total_cases": 8,
+    "match": 6,
+    "mismatch_underrated": 1,
+    "mismatch_overrated": 1,
+    "accuracy": 0.75,
+    "false_positive_in_sample": 0,
+    "false_negative_in_sample": 0
+  }
+}

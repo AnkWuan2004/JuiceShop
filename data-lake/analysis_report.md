@@ -1,4 +1,4 @@
-# Security Analysis Report (Tuần 3)
+# Security Analysis Report
 
 - Rows quét: **93** → nhóm: **74** → findings: **74** (drop no-evidence: 0)
 - Phân bố: high **15** · medium **30** · low **29**

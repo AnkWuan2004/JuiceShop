@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% block title %}API Gateway — Project Sentinel{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-primary)") }}Kong · key-auth · ACL · rate-limit</div>
+  <h2>API Gateway &amp; kiểm thử request an toàn</h2>
+  <p class="page-lead">
+    Mọi request của agent phải đi qua Gateway trước khi tới Juice Shop. Trang này chạy lại đúng luật
+    thật trong <code>kong/kong.yml</code> (key-auth → path-deny → route match → ACL) bằng Python
+    thuần — không phải số bịa, chỉ khác Kong thật ở chỗ không có network/container phía sau. Muốn
+    xem Kong container thật: <code>docker compose up -d</code> cục bộ (đã verify PASS ở Tuần 6).
+  </p>
+</div>
+
+<section class="card" aria-labelledby="sim">
+  <h3 id="sim" style="margin-top:0;">Live: thử một request qua Gateway</h3>
+  <p class="hint">Chọn agent + method + path — kết quả bên dưới là quyết định thật của đúng luật <code>kong.yml</code>, không phải giả lập cố định.</p>
+  <form class="inline" method="post" action="/gateway/simulate">
+    <div style="min-width:180px;">
+      <label for="agent">Agent</label>
+      <select id="agent" name="agent">
+        {% for name in agents.keys() %}
+        <option value="{{ name }}" {% if sim_result and sim_result.agent == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="min-width:160px;">
+      <label for="method">Method</label>
+      <select id="method" name="method">
+        {% for m in ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"] %}
+        <option value="{{ m }}" {% if sim_result and sim_result.method == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:2; min-width:min(100%, 260px);">
+      <label for="path">Path</label>
+      <input type="text" id="path" name="path" value="{{ sim_result.path if sim_result else '/rest/products/search' }}" placeholder="/rest/products/search">
+    </div>
+    <div style="align-self:flex-end;">
+      <button type="submit">Kiểm tra qua Gateway</button>
+    </div>
+  </form>
+
+  {% if sim_result %}
+  {% set d = sim_result.decision %}
+  <p class="alert {{ 'alert-ok' if d.allow else 'alert-error' }}" role="status">
+    <strong>{{ d.http_status }} {{ 'ALLOW' if d.allow else 'DENY' }}</strong> — {{ d.reason }}
+    <br><span class="hint">Plugin: {{ d.matched_plugin }}</span>
+  </p>
+  {% if d.rate_limit_note %}<p class="hint">{{ d.rate_limit_note }}</p>{% endif %}
+  {% endif %}
+</section>
+
+<hr class="section-divider">
+
+<section class="card" aria-labelledby="propose">
+  <h3 id="propose" style="margin-top:0;">Live: Exploit Agent đề xuất request</h3>
+  <p class="hint">
+    Đọc <code>data-lake/fuzz_findings.json</code> thật → gọi AI thật (nếu đã cấu hình
+    <code>OPENAI_API_KEY</code> trên server) hoặc mock offline để sinh đề xuất → chạy qua Gateway ở
+    trên → nếu nguy hiểm, bắt buộc qua HITL trước khi (giả định) gửi.
+  </p>
+  <form method="post" action="/gateway/propose">
+    <button type="submit">Sinh đề xuất từ Exploit Agent</button>
+  </form>
+
+  {% if propose_result %}
+  {% set p = propose_result %}
+  <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+    <p><strong>AI:</strong> {% if p.ai_real %}<span class="badge badge-high">real (DeepSeek)</span>{% else %}<span class="badge badge-medium">mock (chưa cấu hình OPENAI_API_KEY trên server)</span>{% endif %}</p>
+    {% if p.error %}<p class="alert alert-error" role="alert">Lỗi gọi LLM: {{ p.error }}</p>{% endif %}
+    <p><strong>Hành động đề xuất:</strong> <code>{{ p.action }}</code> {% if p.dangerous %}<span class="badge badge-high">nguy hiểm</span>{% endif %}</p>
+    <p><strong>Endpoint:</strong> <code>{{ p.endpoint }}</code></p>
+    <p><strong>Payload:</strong> <code>{{ p.payload }}</code></p>
+    <p><strong>Purpose:</strong> {{ p.purpose }}</p>
+
+    {% set d = p.gateway_decision %}
+    <p class="alert {{ 'alert-ok' if d.allow else 'alert-error' }}" role="status">
+      Gateway sẽ: <strong>{{ d.http_status }} {{ 'ALLOW' if d.allow else 'DENY' }}</strong> — {{ d.reason }}
+    </p>
+
+    {% if p.dangerous %}
+    <p class="hint">Hành động nguy hiểm — cần Approve/Reject trước khi (giả định) gửi qua Gateway:</p>
+    <form class="inline" method="post" action="/gateway/hitl">
+      <input type="hidden" name="title" value="{{ p.title }}">
+      <input type="hidden" name="endpoint" value="{{ p.endpoint }}">
+      <input type="hidden" name="payload" value="{{ p.payload }}">
+      <input type="hidden" name="purpose" value="{{ p.purpose }}">
+      <button type="submit" name="decision" value="approve">Approve</button>
+      <button type="submit" name="decision" value="reject" class="secondary">Reject</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if hitl_result %}
+  {% set h = hitl_result %}
+  <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+    <p><strong>Endpoint:</strong> <code>{{ h.endpoint }}</code> · <strong>Payload:</strong> <code>{{ h.payload }}</code></p>
+    <p><strong>Purpose:</strong> {{ h.purpose }}</p>
+    {% if h.approved %}
+    <p class="alert alert-ok" role="status">{{ icons.check() }}Đã duyệt (Approve) — nếu có Kong thật đang chạy (<code>docker compose up -d</code> local), <code>agents/exploit_agent.py::execute_request()</code> sẽ gửi request này qua Gateway. Không có app thật ở môi trường demo này nên không gửi network thật.</p>
+    {% else %}
+    <p class="alert alert-error" role="alert">{{ icons.warn() }}Reject — dừng ngay, không có request nào được gửi.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+
+<hr class="section-divider">
+
+<section aria-labelledby="config">
+  <h3 id="config">Cấu hình Gateway thật (nguồn dùng để chạy simulator ở trên)</h3>
+  <div class="row">
+    <div class="card">
+      <strong class="card-title">kong/kong.yml</strong>
+      <details><summary>Xem nội dung</summary>{% if kong_yml %}<pre>{{ kong_yml }}</pre>{% else %}<p>Không đọc được file.</p>{% endif %}</details>
+    </div>
+    <div class="card">
+      <strong class="card-title">kong/allowlist.json (client-side, defense-in-depth)</strong>
+      <details><summary>Xem nội dung</summary>{% if allowlist_json %}<pre>{{ allowlist_json }}</pre>{% else %}<p>Không đọc được file.</p>{% endif %}</details>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<section aria-labelledby="evidence">
+  <h3 id="evidence">Bằng chứng đã ghi nhận thật</h3>
+
+  <div class="card">
+    <strong class="card-title">Log request/response qua tool thật (đã redact key) — <code>data-lake/request_log.jsonl</code></strong>
+    {% if request_log_tail %}
+    <div class="table-wrap" role="region" aria-label="request log" tabindex="0">
+    <table>
+      <thead><tr><th>agent</th><th>method</th><th>path</th><th>status</th></tr></thead>
+      <tbody>
+      {% for r in request_log_tail %}
+      <tr><td>{{ r.agent }}</td><td>{{ r.method }}</td><td><code>{{ r.path }}</code></td><td>{{ r.status }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="alert">Chưa có log — chạy <code>python agents/kong_http_tool.py --agent recon-agent --path "/rest/products/search?q=apple"</code> local.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <strong class="card-title">Chuỗi Exploit Agent → HITL đã ghi nhận</strong>
+    {% if exploit_result %}<pre>{{ exploit_result | tojson(indent=2) }}</pre>{% else %}<p class="alert">Chưa có <code>exploit_result.json</code>.</p>{% endif %}
+    {% if hitl_tail %}
+    <details><summary>{{ hitl_tail|length }} quyết định HITL gần nhất</summary><pre>{{ hitl_tail | tojson(indent=2) }}</pre></details>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <strong class="card-title">Đối chiếu tiêu chí PDF Tuần 4</strong>
+    <div class="table-wrap" role="region" aria-label="tiêu chí Tuần 4" tabindex="0">
+    <table>
+      <thead><tr><th>Tiêu chí</th><th>Bằng chứng</th></tr></thead>
+      <tbody>
+      {% for name, ev in week4_criteria %}
+      <tr><td>{{ icons.check() }}{{ name }}</td><td><code>{{ ev }}</code></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="hint">Kết quả chạy thật đầy đủ (7/7 IAM · rate-limit read/write PASS): <code>{{ week4_report }}</code>.</p>
+  </div>
+</section>
+{% endblock %}

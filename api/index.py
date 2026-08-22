@@ -39,6 +39,50 @@ CI_ZAP_REAL = ROOT / "data-lake" / "ci-artifacts" / "zap-scan-report" / "report_
 SEMGREP_REAL = ROOT / "data-lake" / "reports" / "semgrep-report.json"
 TRACES_DIR = ROOT / "data-lake" / "traces"
 
+# Tuần 4 — API Gateway
+KONG_YML = ROOT / "kong" / "kong.yml"
+ALLOWLIST_JSON = ROOT / "kong" / "allowlist.json"
+REQUEST_LOG = ROOT / "data-lake" / "request_log.jsonl"
+EXPLOIT_RESULT = ROOT / "data-lake" / "exploit_result.json"
+HITL_LOG = ROOT / "data-lake" / "hitl_decisions.jsonl"
+FUZZ_FINDINGS = ROOT / "data-lake" / "fuzz_findings.json"
+WEEK4_REPORT = "reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md"
+
+# Tuần 5 — Guardrails / HITL / PII
+INJECTION_BEFORE = ROOT / "data-lake" / "injection_before.json"
+INJECTION_AFTER = ROOT / "data-lake" / "injection_after.json"
+PII_BEFORE = ROOT / "data-lake" / "pii_before.txt"
+PII_AFTER = ROOT / "data-lake" / "pii_after.txt"
+FTP_INJECTION_FIXTURE = ROOT / "juice-shop" / "ftp" / "sentinel_indirect_injection.txt"
+WEEK5_REPORT = "reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md"
+
+# Đúng theo kong/kong.yml — đối chiếu lại nếu file đó đổi.
+GATEWAY_AGENTS = {
+    "recon-agent": {"key": "recon-key-demo", "group": "get-only"},
+    "exploit-agent": {"key": "exploit-key-demo", "group": "exploit"},
+}
+GATEWAY_GROUP_METHODS = {
+    "get-only": {"GET", "HEAD", "OPTIONS"},
+    "exploit": {"GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"},
+}
+GATEWAY_RATE_LIMITS = {"read": 60, "write": 20}
+GATEWAY_PATH_DENY_PREFIX = "/rest/admin"
+GATEWAY_PATH_ALLOW_PREFIXES = ("/api", "/rest")
+
+WEEK4_CRITERIA = [
+    ("API Gateway hoạt động trước app", "docker-compose.yml (service kong) + kong/kong.yml"),
+    ("API key riêng cho công cụ kiểm thử", "consumers recon-agent / exploit-agent, key riêng"),
+    ("Chỉ truy cập endpoint trong allowlist", "Kong ACL + path-deny + kong/allowlist.json"),
+    ("Python Tool GET/POST/header/status + response", "agents/kong_http_tool.py"),
+    ("Giới hạn request/phút", "write 20/phút · read 60/phút"),
+    ("Giới hạn timeout, kích thước response", "timeout_seconds, max_response_bytes trong allowlist.json"),
+    ("Chỉ payload an toàn (dài / ký tự đặc biệt / rỗng / sai kiểu)", "SAFE_BODIES trong kong_http_tool.py"),
+    ("Nhật ký request/response, không lưu API key", "data-lake/request_log.jsonl (redacted)"),
+    ("Demo Agent đề xuất + tool thực thi", "exploit_agent.py → hitl_decisions.jsonl → exploit_result.json"),
+    ("Không gọi được endpoint cấm qua tool", "tests/test_kong_iam.py 7/7 PASS"),
+    ("Request đều đi qua Gateway", "mọi lệnh gọi dùng KONG_BASE"),
+]
+
 SEV_COLOR = {"high": "var(--sn-critical)", "medium": "var(--sn-warning)", "low": "var(--sn-good)"}
 TOOL_COLOR_ORDER = ["var(--sn-series-1)", "var(--sn-series-2)", "var(--sn-series-3)", "var(--sn-series-4)"]
 # Trần an toàn cho "Phân tích toàn bộ" khi LLM thật đang bật — tránh vượt maxDuration=60s của Vercel.
@@ -219,6 +263,82 @@ def run_search(mode: str, question: str, k: int, min_score: float) -> tuple[list
 
 def llm_is_real() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY", "").strip())
+
+
+def read_text_safe(path: Path) -> str | None:
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def read_json_safe(path: Path) -> dict | list | None:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def tail_jsonl(path: Path, n: int = 5) -> list[dict]:
+    if not path.exists():
+        return []
+    lines = [l for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    out = []
+    for line in lines[-n:]:
+        try:
+            out.append(json.loads(line))
+        except Exception:
+            continue
+    return out
+
+
+def simulate_gateway_decision(agent: str, method: str, path: str) -> dict:
+    """Chạy lại đúng luật thật trong kong/kong.yml (key-auth → path-deny → route match → ACL) —
+    deterministic trên dữ liệu cấu hình thật, không có network/container Kong phía sau."""
+    method = (method or "GET").upper()
+    path = path or "/"
+    info = GATEWAY_AGENTS.get(agent)
+    if info is None:
+        return {
+            "allow": False,
+            "http_status": 401,
+            "reason": "Không có consumer/apikey hợp lệ cho agent này.",
+            "matched_plugin": "key-auth",
+        }
+    if path.startswith(GATEWAY_PATH_DENY_PREFIX):
+        return {
+            "allow": False,
+            "http_status": 403,
+            "reason": f"Path deny cứng: mọi request tới {GATEWAY_PATH_DENY_PREFIX}* bị chặn bất kể ACL.",
+            "matched_plugin": "pre-function (path-deny)",
+        }
+    if not path.startswith(GATEWAY_PATH_ALLOW_PREFIXES):
+        return {
+            "allow": False,
+            "http_status": 404,
+            "reason": "Path không khớp route nào (Kong chỉ route /api và /rest).",
+            "matched_plugin": "route matching",
+        }
+    group = info["group"]
+    allowed_methods = GATEWAY_GROUP_METHODS[group]
+    if method not in allowed_methods:
+        return {
+            "allow": False,
+            "http_status": 403,
+            "reason": f"ACL: group '{group}' (agent {agent}) không có quyền method {method} trên route này.",
+            "matched_plugin": "acl",
+        }
+    is_write = method in ("POST", "PUT", "PATCH", "DELETE")
+    limit = GATEWAY_RATE_LIMITS["write" if is_write else "read"]
+    return {
+        "allow": True,
+        "http_status": 200,
+        "reason": f"key-auth OK (consumer={agent}) → path không bị deny → ACL OK (group={group} được phép {method}).",
+        "matched_plugin": f"key-auth + acl ({'write' if is_write else 'read'})",
+        "rate_limit_note": (
+            f"Route {'ghi' if is_write else 'đọc'} giới hạn {limit} request/phút theo kong.yml. "
+            "Không đếm real-time trong demo này (stateless) — xem bằng chứng burst-test thật ở dưới."
+        ),
+    }
 
 
 def load_report_findings() -> tuple[list[dict], dict | None]:
@@ -471,6 +591,205 @@ def agent_test(request: Request):
         test_output = {"output": str(e), "ok": False}
 
     return templates.TemplateResponse(request, "agent.html", _agent_ctx(request, test_output=test_output))
+
+
+# ── API Gateway — Tuần 4 ─────────────────────────────────────────────────
+def _gateway_ctx(request: Request, *, sim_result=None, propose_result=None, hitl_result=None) -> dict:
+    return {
+        "kong_yml": read_text_safe(KONG_YML),
+        "allowlist_json": read_text_safe(ALLOWLIST_JSON),
+        "agents": GATEWAY_AGENTS,
+        "request_log_tail": tail_jsonl(REQUEST_LOG, 5),
+        "hitl_tail": tail_jsonl(HITL_LOG, 5),
+        "exploit_result": read_json_safe(EXPLOIT_RESULT),
+        "week4_criteria": WEEK4_CRITERIA,
+        "week4_report": WEEK4_REPORT,
+        "sim_result": sim_result,
+        "propose_result": propose_result,
+        "hitl_result": hitl_result,
+        **base_ctx(request),
+    }
+
+
+@app.get("/gateway", response_class=HTMLResponse)
+def gateway_page(request: Request):
+    return templates.TemplateResponse(request, "gateway.html", _gateway_ctx(request))
+
+
+@app.post("/gateway/simulate", response_class=HTMLResponse)
+def gateway_simulate(request: Request, agent: str = Form(...), method: str = Form(...), path: str = Form(...)):
+    sim_result = {
+        "agent": agent,
+        "method": method,
+        "path": path,
+        "decision": simulate_gateway_decision(agent, method, path),
+    }
+    return templates.TemplateResponse(request, "gateway.html", _gateway_ctx(request, sim_result=sim_result))
+
+
+@app.post("/gateway/propose", response_class=HTMLResponse)
+def gateway_propose(request: Request):
+    from common import LLMClient, parse_json_loose
+    from exploit_agent import DANGEROUS_ACTIONS, SYSTEM
+
+    findings = read_json_safe(FUZZ_FINDINGS) or []
+    llm = LLMClient()
+    was_real = not llm.mock
+    try:
+        raw = llm.chat(SYSTEM, json.dumps({"fuzz_findings": findings[:5]}, ensure_ascii=False))
+        plan = parse_json_loose(raw)
+        error = None
+    except Exception as e:
+        plan, error = {}, str(e)
+
+    action = plan.get("action", "sqli_probe")
+    dangerous = bool(plan.get("dangerous")) or action in DANGEROUS_ACTIONS
+    req_plan = plan.get("request") or {
+        "method": "GET",
+        "path": "/rest/products/search",
+        "params": {"q": "' OR '1'='1"},
+    }
+    decision = simulate_gateway_decision("exploit-agent", req_plan.get("method", "GET"), req_plan.get("path", "/"))
+
+    propose_result = {
+        "plan": plan,
+        "error": error,
+        "action": action,
+        "dangerous": dangerous,
+        "ai_real": was_real,
+        "gateway_decision": decision,
+        "title": f"Exploit action: {action}",
+        "endpoint": f"{req_plan.get('method', 'GET')} {req_plan.get('path', '-')}",
+        "payload": json.dumps(req_plan.get("params") or req_plan.get("json") or {}, ensure_ascii=False),
+        "purpose": plan.get("justification") or f"Kiểm tra an toàn cho hành động '{action}' trên Juice Shop lab-only.",
+    }
+    return templates.TemplateResponse(request, "gateway.html", _gateway_ctx(request, propose_result=propose_result))
+
+
+@app.post("/gateway/hitl", response_class=HTMLResponse)
+def gateway_hitl(
+    request: Request,
+    decision: str = Form(...),
+    title: str = Form(...),
+    endpoint: str = Form(...),
+    payload: str = Form(...),
+    purpose: str = Form(...),
+):
+    from hitl_cli import request_approval
+
+    approved = decision == "approve"
+    try:
+        approved = request_approval(
+            title,
+            json.dumps({"endpoint": endpoint, "payload": payload, "purpose": purpose}, ensure_ascii=False),
+            auto_approve=decision == "approve",
+            auto_reject=decision != "approve",
+            endpoint=endpoint,
+            payload=payload,
+            purpose=purpose,
+        )
+    except OSError:
+        pass  # filesystem read-only trên serverless — vẫn hiển thị đúng quyết định, chỉ log best-effort
+
+    hitl_result = {"approved": approved, "endpoint": endpoint, "payload": payload, "purpose": purpose}
+    return templates.TemplateResponse(request, "gateway.html", _gateway_ctx(request, hitl_result=hitl_result))
+
+
+# ── Guardrails / HITL / che dữ liệu nhạy cảm — Tuần 5 ────────────────────
+def _guardrails_ctx(
+    request: Request,
+    *,
+    injection_result=None,
+    redact_result=None,
+    hitl_result=None,
+    test_output=None,
+) -> dict:
+    return {
+        "fixture_injection": read_text_safe(FTP_INJECTION_FIXTURE) or "",
+        "fixture_pii": read_text_safe(PII_BEFORE) or "",
+        "injection_before": read_json_safe(INJECTION_BEFORE),
+        "injection_after": read_json_safe(INJECTION_AFTER),
+        "pii_before": read_text_safe(PII_BEFORE),
+        "pii_after": read_text_safe(PII_AFTER),
+        "hitl_tail": tail_jsonl(HITL_LOG, 5),
+        "week5_report": WEEK5_REPORT,
+        "injection_result": injection_result,
+        "redact_result": redact_result,
+        "hitl_result": hitl_result,
+        "test_output": test_output,
+        **base_ctx(request),
+    }
+
+
+@app.get("/guardrails", response_class=HTMLResponse)
+def guardrails_page(request: Request):
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request))
+
+
+@app.post("/guardrails/check_injection", response_class=HTMLResponse)
+def guardrails_check_injection(request: Request, text: str = Form(...)):
+    from guardrails import check_input
+
+    r = check_input(text)
+    injection_result = {
+        "input": text,
+        "blocked": r.blocked,
+        "score": r.score,
+        "reasons": r.reasons,
+        "cleaned": r.cleaned,
+    }
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, injection_result=injection_result))
+
+
+@app.post("/guardrails/redact", response_class=HTMLResponse)
+def guardrails_redact(request: Request, text: str = Form(...)):
+    from pii_redaction import redact
+
+    redact_result = {"input": text, "output": redact(text)}
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, redact_result=redact_result))
+
+
+@app.post("/guardrails/hitl", response_class=HTMLResponse)
+def guardrails_hitl(request: Request, decision: str = Form(...)):
+    from hitl_cli import request_approval
+
+    title = "Exploit action: sqli_probe"
+    endpoint = "GET /rest/products/search"
+    payload = json.dumps({"q": "' OR '1'='1"}, ensure_ascii=False)
+    purpose = "Kiểm tra an toàn cho hành động 'sqli_probe' trên Juice Shop lab-only."
+    approved = decision == "approve"
+    try:
+        approved = request_approval(
+            title,
+            json.dumps({"endpoint": endpoint, "payload": payload, "purpose": purpose}, ensure_ascii=False),
+            auto_approve=decision == "approve",
+            auto_reject=decision != "approve",
+            endpoint=endpoint,
+            payload=payload,
+            purpose=purpose,
+        )
+    except OSError:
+        pass
+
+    hitl_result = {"approved": approved, "endpoint": endpoint, "payload": payload, "purpose": purpose}
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, hitl_result=hitl_result))
+
+
+@app.post("/guardrails/test", response_class=HTMLResponse)
+def guardrails_test(request: Request):
+    try:
+        res = subprocess.run(
+            [sys.executable, str(ROOT / "tests" / "test_guardrails_week5.py")],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=55,
+        )
+        test_output = {"output": res.stdout + res.stderr, "ok": res.returncode == 0}
+    except Exception as e:
+        test_output = {"output": str(e), "ok": False}
+
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, test_output=test_output))
 
 
 # ── Xuất báo cáo tổng quát ────────────────────────────────────────────────

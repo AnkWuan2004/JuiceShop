@@ -1,6 +1,6 @@
 # Tiến độ Project Sentinel
 
-Cập nhật: 2026-08-19 (Tuần 5 — Guardrails/HITL/che dữ liệu nhạy cảm)
+Cập nhật: 2026-08-19 (Tuần 6 — Tích hợp, đánh giá, thuyết trình — PASS, 6/6 tuần đề PDF hoàn thành)
 
 ## Kết luận ngắn
 
@@ -14,6 +14,14 @@ liệu nhạy cảm — email/phone/SSN/token/API key/password — trước khi 
 `tests/test_guardrails_week5.py`: **23/23 PASS** (3 case injection + 3 case sensitive-data + 3 case
 approval-required, vượt tối thiểu đề yêu cầu 2+2+2). Chi tiết:
 [`reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md`](week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md).
+
+**2026-08-19 — Tuần 6 "Tích hợp, đánh giá và thuyết trình": PASS.** Docker Compose thật lần đầu chạy
+được (Juice Shop + Kong container sống) — 3 test Kong (IAM, rate-limit write/read) verify lại trên Kong
+thật, đều PASS. Luồng đầu-cuối + metrics mới `scripts/e2e_report.py`. SQL Injection xác nhận khai thác
+sống qua gateway thật (`/rest/products/search`). Eval 8 case Security Analysis Agent (đáp án tự chuẩn
+bị): 6/8 khớp severity, 2 gap có đề xuất cải tiến cụ thể. Tài liệu mới: `docs/RESULTS_REPORT.md`,
+`docs/PRODUCT_BRIEF.md`, `docs/DEMO_CHECKLIST.md` (viết lại), sơ đồ kiến trúc trong `README.md`. Chi
+tiết: [`reports/week-6/2026-08-19_NguyenThanhAnhQuan_Week6.md`](week-6/2026-08-19_NguyenThanhAnhQuan_Week6.md).
 
 ## Chi tiết theo tuần
 

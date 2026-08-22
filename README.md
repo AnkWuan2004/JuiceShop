@@ -4,13 +4,15 @@ Hạ tầng DevSecOps + AI-assisted pentest thực hành trên **OWASP Juice Sho
 
 ## Phiên bản target
 
-| Mục | Giá trị |
-|---|---|
-| Juice Shop | **v20.1.1** |
-| Commit | `f915bddd82790d0f3018902d36ae9b4241a5f51f` |
-| Pin file | `juice-shop/.sentinel-pin` |
-| App (ZAP/debug) | http://localhost:3000 |
-| Kong (agents) | http://localhost:8000 |
+
+| Mục             | Giá trị                                        |
+| --------------- | ---------------------------------------------- |
+| Juice Shop      | **v20.1.1**                                    |
+| Commit          | `f915bddd82790d0f3018902d36ae9b4241a5f51f`     |
+| Pin file        | `juice-shop/.sentinel-pin`                     |
+| App (ZAP/debug) | [http://localhost:3000](http://localhost:3000) |
+| Kong (agents)   | [http://localhost:8000](http://localhost:8000) |
+
 
 ## Cấu trúc thư mục
 
@@ -39,9 +41,34 @@ Project-Sentinel/
     └── PROGRESS.md             # Nhật ký tiến độ toàn dự án (được phép cập nhật liên tục)
 ```
 
+## Kiến trúc — luồng đầu-cuối
+
+```mermaid
+flowchart LR
+    CI["CI: Semgrep SAST\n+ OWASP ZAP DAST"] --> Norm["Chuẩn hóa\nparse_results.py"]
+    Norm --> DB[("vuln_data.db")]
+    RAG[("Kho tri thức\nrag/data")] --> Agent
+    DB --> Agent["Security Analysis\nAgent"]
+    Agent --> Report[("analysis_report\n.jsonl")]
+    Agent --> Propose["Exploit Agent:\nđề xuất request"]
+    Propose --> HITL{"HITL\nApprove/Reject"}
+    HITL -- Reject --> Stop["Dừng — không gửi"]
+    HITL -- Approve --> GW["API Gateway (Kong)\nallowlist + rate-limit"]
+    GW --> App["Juice Shop"]
+    App --> Filter["Lọc Prompt Injection\n+ che dữ liệu nhạy cảm"]
+    Filter --> Report
+    Filter --> Log[("logs / traces\ndata-lake/")]
+```
+
+
+
+Chi tiết: mọi bước ghi log vào `data-lake/` (traces, request_log, hitl_decisions) — xem
+`scripts/e2e_report.py` để chạy cả luồng và lấy metrics (thời gian xử lý, số request, số cảnh báo, số
+Approve/Reject, lỗi LLM/app).
+
 Quy tắc report vs code: **code** trong `agents/`, `api/`, `rag/`... là của chung project, thay đổi
 liên tục theo thời gian. **Báo cáo** trong `reports/week-N/` là hồ sơ lịch sử tại thời điểm nộp —
-không chỉnh sửa lại để khớp code mới. Chi tiết: [`reports/README.md`](reports/README.md).
+không chỉnh sửa lại để khớp code mới. Chi tiết: `[reports/README.md](reports/README.md)`.
 
 ## Chạy staging
 
@@ -69,7 +96,7 @@ cp .env.example .env          # rồi dán OpenRouter API key (sk-or-v1-...) và
 # OPENAI_BASE_URL=https://openrouter.ai/api/v1 · OPENAI_MODEL=deepseek/deepseek-v4-flash-0731
 ```
 
-Tạo key: https://openrouter.ai/keys · Để trống key → agents chạy **MOCK offline** (không gọi mạng).
+Tạo key: [https://openrouter.ai/keys](https://openrouter.ai/keys) · Để trống key → agents chạy **MOCK offline** (không gọi mạng).
 
 ## Python setup & demo offline (MOCK LLM)
 
@@ -106,8 +133,10 @@ python scripts/demo_analysis_agent.py     # seed → analyze → http://127.0.0.
 
 ## Live demo — Vercel (FastAPI)
 
-Dashboard demo Tuần 1-3 chạy bằng FastAPI (`api/index.py`), thay cho Streamlit cũ — Streamlit
-cần một server sống liên tục nên không deploy được lên Vercel serverless.
+Dashboard demo Tuần 1-5 chạy bằng FastAPI (`api/index.py`), thay cho Streamlit cũ — Streamlit
+cần một server sống liên tục nên không deploy được lên Vercel serverless. Route: `/` (tổng quan),
+`/scan` (Tuần 1), `/knowledge` (Tuần 2), `/agent` (Tuần 3), `/gateway` (Tuần 4), `/guardrails`
+(Tuần 5).
 
 ```bash
 pip install -r requirements.txt
@@ -118,14 +147,23 @@ Deploy lên Vercel: import repo GitHub này vào Vercel (Zero Config — Vercel 
 "backend framework" và route đúng path gốc; `vercel.json` chỉ khai báo `maxDuration`, **không** khai
 `rewrites` — thêm rewrite `/(.*) → /api/index` sẽ làm mọi route trả 404, xem `AGENTS.md`). Đặt biến
 môi trường `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` trong Project Settings → Environment
-Variables nếu muốn chạy LLM thật (bỏ trống → MOCK offline).
+Variables nếu muốn chạy LLM thật (bỏ trống → MOCK offline; xem `.env` local để lấy giá trị thật).
 
 Do Vercel serverless không có filesystem ghi bền vững, nút "Chạy Agent ngay" chạy Agent thật trên dữ
 liệu hiện có nhưng không ghi đè `analysis_report.jsonl` trong repo — kết quả chỉ hiển thị cho lần bấm
 đó. Toàn bộ dữ liệu hiển thị khác (`vuln_data.db`, `rag/store/*`, báo cáo đã commit) đọc thẳng từ
 snapshot có sẵn trong repo.
 
-## Tuần 4 — API Gateway và kiểm thử request an toàn (demo nhanh)
+`/gateway` (Tuần 4) và `/guardrails` (Tuần 5) cũng chạy thật trên Vercel — không phải Kong container
+(Vercel serverless không dựng Docker được) nhưng logic ACL/path-deny chạy lại đúng luật thật trong
+`kong/kong.yml`, đề xuất của Exploit Agent gọi AI thật/mock theo đúng `OPENAI_API_KEY` đã cấu hình,
+và 2 cơ chế guardrail/PII-redaction của Tuần 5 luôn là code thật (regex thuần, không mock). Muốn xem
+Kong container thật: `docker compose up -d` cục bộ (xem mục Tuần 4 dưới).
+
+## Tuần 4 — API Gateway và kiểm thử request an toàn
+
+Live demo: `/gateway` trên Vercel (policy simulator chạy đúng luật `kong.yml` + đề xuất AI thật của
+Exploit Agent + bằng chứng đã ghi nhận). Chạy đầy đủ với Kong container thật (cần Docker cục bộ):
 
 Báo cáo: `reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md` · Nền tảng Gateway/IAM: `reports/week-2/2026-07-31_NguyenThanhAnhQuan_Week2.md`
 
@@ -159,37 +197,42 @@ python agents/exploit_agent.py --reject-demo  # demo HITL Reject → chặn requ
 python agents/pii_redaction.py --demo         # demo che email/phone/ssn/token/apikey/password
 ```
 
-**Không có trên live demo Vercel** (xem mục Live demo phía trên): 3 cơ chế này nằm ở lớp agent CLI
-(`agents/recon_agent.py`, `agents/exploit_agent.py`, `agents/guardrails.py`, `agents/pii_redaction.py`),
-chưa nối vào route nào của `api/index.py`. Trang Vercel hiện chỉ phục vụ Security Analysis Agent của
-Tuần 3 (`/scan`, `/knowledge`, `/agent`) — muốn xem Tuần 5 phải chạy local bằng các lệnh trên.
+**Cũng có trên live demo Vercel**: `/guardrails` gọi trực tiếp `agents/guardrails.py::check_input()`
+và `agents/pii_redaction.py::redact()` thật trên input tự nhập (không mock), cùng demo HITL
+Approve/Reject và nút chạy lại `tests/test_guardrails_week5.py` thật. Các lệnh CLI trên vẫn hữu ích
+để xem log/trace chi tiết hơn hoặc chạy offline.
+
+## Tuần 6 — Tích hợp, đánh giá và thuyết trình
+
+Luồng đầu-cuối thật trên Docker Compose (Kong thật, không phải gateway thay thế): quét → chuẩn hóa →
+Security Analysis Agent → đề xuất request → Approve/Reject → Kong → lọc injection/PII → báo cáo. Sơ đồ:
+xem mục "Kiến trúc" phía trên.
+
+Báo cáo: `reports/week-6/2026-08-19_NguyenThanhAnhQuan_Week6.md` · Kết quả: `docs/RESULTS_REPORT.md` ·
+Eval Security Analysis Agent (8 case): `docs/notes/EVAL_SECURITY_AGENT.md` · Bản mô tả sản phẩm:
+`docs/PRODUCT_BRIEF.md` · Demo 10-15 phút: `docs/DEMO_CHECKLIST.md`
+
+```bash
+docker compose up -d
+python scripts/e2e_report.py       # luồng đầu-cuối + metrics: thời gian, request, cảnh báo, approve/reject, lỗi
+```
 
 ## Tiến độ
 
 Bám theo đúng 6 tuần của đề (`[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel.pdf`):
 
-| Tuần | Nội dung (theo đề) | Trạng thái | Báo cáo |
-|---|---|---|---|
-| 1 | Chuẩn bị môi trường + quét bảo mật cơ bản | ✅ Done | [`week-1/README.md`](reports/week-1/README.md) |
-| 2 | Chuẩn hóa kết quả quét + xây kho tri thức | ✅ Done | [`gap-analysis-week1-3.md`](reports/gap-analysis-week1-3.md) § Tuần 2 |
-| 3 | Xây dựng Security Analysis Agent | ✅ Done — 13/13 test, live demo Vercel | [`week-3/2026-08-07_..._Week3.md`](reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md) |
-| 4 | API Gateway + kiểm thử request an toàn | ✅ Done — 13/13 tiêu chí PASS | [`week-4/2026-08-15_..._Week4.md`](reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md) |
-| 5 | Guardrails, phê duyệt thủ công, che dữ liệu nhạy cảm | ✅ Done — 23/23 test PASS | [`week-5/2026-08-19_..._Week5.md`](reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md) |
-| 6 | Tích hợp, đánh giá và thuyết trình | ⏳ Chưa làm | — |
+
+| Tuần | Nội dung (theo đề)                                   | Trạng thái                            | Báo cáo                                                                                   |
+| ---- | ---------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1    | Chuẩn bị môi trường + quét bảo mật cơ bản            | ✅ Done                                | `[week-1/README.md](reports/week-1/README.md)`                                            |
+| 2    | Chuẩn hóa kết quả quét + xây kho tri thức            | ✅ Done                                | `[gap-analysis-week1-3.md](reports/gap-analysis-week1-3.md)` § Tuần 2                     |
+| 3    | Xây dựng Security Analysis Agent                     | ✅ Done — 13/13 test, live demo Vercel | `[week-3/2026-08-07_..._Week3.md](reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md)` |
+| 4    | API Gateway + kiểm thử request an toàn               | ✅ Done — 13/13 tiêu chí PASS, live demo Vercel | `[week-4/2026-08-15_..._Week4.md](reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md)` |
+| 5    | Guardrails, phê duyệt thủ công, che dữ liệu nhạy cảm | ✅ Done — 23/23 test PASS, live demo Vercel | `[week-5/2026-08-19_..._Week5.md](reports/week-5/2026-08-19_NguyenThanhAnhQuan_Week5.md)` |
+| 6    | Tích hợp, đánh giá và thuyết trình                   | ⏳ Chưa làm                            | —                                                                                         |
+
 
 Chi tiết nhật ký: `reports/PROGRESS.md`. Demo: `docs/DEMO_CHECKLIST.md`. Runbook: `docs/RUNBOOK.md`.
-
-## Giới hạn hiện tại
-
-Không tách file `DEBT.md` riêng (nhiều file nhỏ ở gốc repo gây rối hơn là giúp) — theo dõi hạn chế
-tại đây, gộp theo tuần phát hiện:
-
-- **Tuần 3 — Semantic search fallback.** Khi không cấu hình Chroma, "semantic search" trong kho tri
-  thức dùng TF-IDF cosine similarity thay vì embedding thật — đủ demo nhưng kém chính xác ngữ nghĩa
-  hơn embedding model. Xem `reports/week-3/2026-08-07_NguyenThanhAnhQuan_Week3.md`.
-- **Live demo Vercel không ghi đè báo cáo.** Serverless không có filesystem ghi bền vững; nút "Chạy
-  Agent ngay" chỉ hiển thị kết quả tạm cho lần bấm đó, không cập nhật `analysis_report.jsonl` trong
-  repo (xem mục Live demo phía trên).
 
 ## An toàn
 

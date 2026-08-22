@@ -1,12 +1,14 @@
 {
-  "llm_responses": 171,
-  "errors": 0,
-  "error_rate": 0.0,
-  "total_est_tokens": 12181,
-  "total_est_cost_usd": 0.0,
-  "avg_latency_ms": 0.0,
-  "max_latency_ms": 0.0,
-  "alerts": [],
+  "llm_responses": 1351,
+  "errors": 148,
+  "error_rate": 0.09873248832555037,
+  "total_est_tokens": 964975,
+  "total_est_cost_usd": 0.010112099999999999,
+  "avg_latency_ms": 399.3279052553664,
+  "max_latency_ms": 10436.0,
+  "alerts": [
+    "max_latency_ms 10436 > 10000"
+  ],
   "thresholds": {
     "cost_usd": 5.0,
     "latency_ms": 10000.0,

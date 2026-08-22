@@ -258,17 +258,18 @@
 
   form.inline { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
   label { display: block; font-size: .88rem; font-weight: 600; color: var(--sn-ink); margin-bottom: .35rem; }
-  input[type=text], input[type=number], select {
+  input[type=text], input[type=number], select, textarea {
     width: 100%; min-height: 44px;
     background: var(--sn-bg-elevated); border: 1px solid var(--sn-baseline); color: var(--sn-ink);
     padding: .55rem .8rem; border-radius: var(--sn-radius-sm); font-size: 1rem; font-family: inherit;
     transition: border-color .2s ease, box-shadow .2s ease;
   }
-  input[type=text]:hover, select:hover { border-color: rgba(56,189,248,.4); }
-  input[type=text]:focus, select:focus {
+  textarea { resize: vertical; line-height: 1.5; }
+  input[type=text]:hover, select:hover, textarea:hover { border-color: rgba(56,189,248,.4); }
+  input[type=text]:focus, select:focus, textarea:focus {
     border-color: var(--sn-primary); box-shadow: 0 0 0 3px var(--sn-glow); outline: none;
   }
-  input[type=text]::placeholder { color: var(--sn-muted); }
+  input[type=text]::placeholder, textarea::placeholder { color: var(--sn-muted); }
   input[type=range] { accent-color: var(--sn-primary); vertical-align: middle; cursor: pointer; width: 100%; min-width: 120px; }
   button, .tabs a, nav a, summary, .btn { cursor: pointer; }
   button, .btn {
@@ -411,6 +412,8 @@
       <a href="/scan" class="{{ 'active' if request.url.path == '/scan' else '' }}" {% if request.url.path == '/scan' %}aria-current="page"{% endif %}>{{ icons.nav_scan() }} Quét bảo mật</a>
       <a href="/knowledge" class="{{ 'active' if request.url.path == '/knowledge' else '' }}" {% if request.url.path == '/knowledge' %}aria-current="page"{% endif %}>{{ icons.nav_kb() }} Kho tri thức</a>
       <a href="/agent" class="{{ 'active' if request.url.path.startswith('/agent') else '' }}" {% if request.url.path.startswith('/agent') %}aria-current="page"{% endif %}>{{ icons.nav_agent() }} Phân tích AI</a>
+      <a href="/gateway" class="{{ 'active' if request.url.path.startswith('/gateway') else '' }}" {% if request.url.path.startswith('/gateway') %}aria-current="page"{% endif %}>{{ icons.nav_gateway() }} API Gateway</a>
+      <a href="/guardrails" class="{{ 'active' if request.url.path.startswith('/guardrails') else '' }}" {% if request.url.path.startswith('/guardrails') %}aria-current="page"{% endif %}>{{ icons.nav_guardrails() }} Guardrails</a>
     </nav>
   </div>
 

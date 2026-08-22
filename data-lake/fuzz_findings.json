@@ -1,63 +1,56 @@
 [
   {
     "url": "http://localhost:8000/ftp/?q=",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /ftp/?q= (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a02848f80>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
+    "status": 404,
+    "latency_ms": 1,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"2599c23175041d33ff485738d818e562\"\n}",
+    "anomaly": false,
     "payload": "",
     "mutations": []
   },
   {
     "url": "http://localhost:8000/ftp/?q=",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /ftp/?q= (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a0281e330>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
+    "status": 404,
+    "latency_ms": 4,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"2af7231482cf8d5e97b466624dd2eb68\"\n}",
+    "anomaly": false,
     "payload": "",
     "mutations": []
   },
   {
     "url": "http://localhost:8000/rest/products/search?q=%27",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /rest/products/search?q=%27 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a0281dac0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
+    "status": 429,
+    "latency_ms": 6,
+    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"c9f20801948332779ca6045514082a0c\"\n}",
+    "anomaly": false,
     "payload": "'",
-    "mutations": [
-      {
-        "payload": "''",
-        "status": 0,
-        "anomaly": true
-      },
-      {
-        "payload": "''",
-        "status": 0,
-        "anomaly": true
-      }
-    ]
-  },
-  {
-    "url": "http://localhost:8000/rest/products/search?q=%27%27",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /rest/products/search?q=%27%27 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a0281c620>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
-    "payload": "''",
-    "mutated_from": "'",
-    "mutation_round": 1
-  },
-  {
-    "url": "http://localhost:8000/rest/products/search?q=%27%27",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /rest/products/search?q=%27%27 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a0281c110>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
-    "payload": "''",
-    "mutated_from": "'",
-    "mutation_round": 2
+    "mutations": []
   },
   {
     "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1--",
-    "status": 0,
-    "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /rest/products/search?q=%27+OR+1%3D1-- (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x756a027aaf90>: Failed to establish a new connection: [Errno 111] Connection refused'))",
-    "anomaly": true,
+    "status": 429,
+    "latency_ms": 6,
+    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"5823ad47862cfa6724d1f6177e3cb851\"\n}",
+    "anomaly": false,
     "payload": "' OR 1=1--",
+    "mutations": []
+  },
+  {
+    "url": "http://localhost:8000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E",
+    "status": 429,
+    "latency_ms": 5,
+    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"4764c565f2037471d282d35ff28d133c\"\n}",
+    "anomaly": false,
+    "payload": "<script>alert(1)</script>",
+    "mutations": []
+  },
+  {
+    "url": "http://localhost:8000/ftp/?q=",
+    "status": 404,
+    "latency_ms": 5,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"1b74ac535301a2127512d55cfb536511\"\n}",
+    "anomaly": false,
+    "payload": "",
     "mutations": []
   }
 ]

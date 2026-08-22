@@ -3,7 +3,7 @@
 # Mặc định (khuyến nghị): kéo image pin — nhanh, tránh lỗi npm network
 #   docker compose up -d
 #
-# Build từ source (Tuần 7 sửa code trong juice-shop/) — nặng, cần mạng ổn:
+# Build từ source (khi sửa code trong juice-shop/) — nặng, cần mạng ổn:
 #   docker compose -f docker-compose.yml -f docker-compose.from-source.yml up -d --build
 #
 # Juice Shop: http://localhost:3000  |  Kong: http://localhost:8000

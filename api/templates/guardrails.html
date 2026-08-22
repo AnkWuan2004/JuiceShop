@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% block title %}Guardrails — Project Sentinel{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-kicker">{{ icons.dot("var(--sn-good)") }}Prompt injection · HITL · PII redaction</div>
+  <h2>Guardrails, phê duyệt thủ công &amp; che dữ liệu nhạy cảm</h2>
+  <p class="page-lead">
+    3 form dưới đây gọi thẳng code thật đang chạy production (<code>agents/guardrails.py</code>,
+    <code>agents/pii_redaction.py</code>, <code>agents/hitl_cli.py</code>) trên input bạn nhập —
+    không phải kết quả dựng sẵn. Cả 2 cơ chế injection-filter và PII-redaction là regex thuần Python
+    nên luôn chạy thật, không phụ thuộc AI/network.
+  </p>
+</div>
+
+<section class="card" aria-labelledby="injection">
+  <h3 id="injection" style="margin-top:0;">Live: chống Prompt Injection</h3>
+  <p class="hint">Nội dung lấy từ ứng dụng (vd. file phục vụ qua <code>/ftp/</code>) bị coi là dữ liệu không tin cậy, phải qua <code>check_input()</code> trước khi vào context agent. Ô dưới đây điền sẵn fixture thật <code>juice-shop/ftp/sentinel_indirect_injection.txt</code> — sửa tự do rồi bấm kiểm tra.</p>
+  <form method="post" action="/guardrails/check_injection">
+    <label for="inj_text">Nội dung cần kiểm tra</label>
+    <textarea id="inj_text" name="text" rows="5">{{ injection_result.input if injection_result else fixture_injection }}</textarea>
+    <div style="margin-top:.75rem;"><button type="submit">Chạy check_input() thật</button></div>
+  </form>
+
+  {% if injection_result %}
+  {% set r = injection_result %}
+  <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+    {% if r.blocked %}
+    <p class="alert alert-error" role="alert">{{ icons.warn() }}BLOCKED — score={{ "%.2f"|format(r.score) }}</p>
+    {% else %}
+    <p class="alert alert-ok" role="status">{{ icons.check() }}Không phát hiện injection — score={{ "%.2f"|format(r.score) }}</p>
+    {% endif %}
+    {% if r.reasons %}<p><strong>Lý do:</strong> {{ r.reasons | join(", ") }}</p>{% endif %}
+    <p><strong>Nội dung sau xử lý (đưa vào LLM):</strong></p>
+    <pre>{{ r.cleaned }}</pre>
+  </div>
+  {% endif %}
+
+  <details style="margin-top:1rem;">
+    <summary>Bằng chứng vòng lặp thật đã ghi nhận (before/after guardrail)</summary>
+    <div class="row">
+      <div><strong class="card-title">Không có guardrail</strong><pre>{{ injection_before | tojson(indent=2) if injection_before else "Chưa có data-lake/injection_before.json" }}</pre></div>
+      <div><strong class="card-title">Có guardrail</strong><pre>{{ injection_after | tojson(indent=2) if injection_after else "Chưa có data-lake/injection_after.json" }}</pre></div>
+    </div>
+  </details>
+</section>
+
+<hr class="section-divider">
+
+<section class="card" aria-labelledby="pii">
+  <h3 id="pii" style="margin-top:0;">Live: che dữ liệu nhạy cảm (PII)</h3>
+  <p class="hint">Che 6 loại trước khi vào LLM hoặc log: Email, Số điện thoại, Token (Bearer/JWT), API key, Password, SSN-like. Ô dưới điền sẵn câu mẫu — sửa tự do rồi bấm che.</p>
+  <form method="post" action="/guardrails/redact">
+    <label for="pii_text">Nội dung cần che</label>
+    <textarea id="pii_text" name="text" rows="3">{{ redact_result.input if redact_result else fixture_pii }}</textarea>
+    <div style="margin-top:.75rem;"><button type="submit">Chạy redact() thật</button></div>
+  </form>
+
+  {% if redact_result %}
+  <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+    <p><strong>Trước:</strong></p><pre>{{ redact_result.input }}</pre>
+    <p><strong>Sau:</strong></p><pre>{{ redact_result.output }}</pre>
+  </div>
+  {% endif %}
+
+  <details style="margin-top:1rem;">
+    <summary>Ví dụ đã ghi nhận (<code>data-lake/pii_before.txt</code> / <code>pii_after.txt</code>)</summary>
+    <div class="row">
+      <div><strong class="card-title">Trước</strong><pre>{{ pii_before or "—" }}</pre></div>
+      <div><strong class="card-title">Sau</strong><pre>{{ pii_after or "—" }}</pre></div>
+    </div>
+  </details>
+</section>
+
+<hr class="section-divider">
+
+<section class="card" aria-labelledby="hitl">
+  <h3 id="hitl" style="margin-top:0;">Live: Human-in-the-Loop trước request nguy hiểm</h3>
+  <p class="hint">Trước khi gửi request bị đánh giá nguy hiểm, hệ thống bắt buộc hiển thị Endpoint/Payload/Purpose rồi hỏi Approve/Reject (<code>agents/hitl_cli.py::request_approval</code>). Ví dụ dưới lấy từ hành động mẫu <code>sqli_probe</code> của Exploit Agent (xem live thật với đề xuất do AI sinh tại trang <a href="/gateway">API Gateway</a>).</p>
+  <div class="check-line">
+    <p><strong>Endpoint:</strong> <code>GET /rest/products/search</code></p>
+    <p><strong>Payload:</strong> <code>{"q": "' OR '1'='1"}</code></p>
+    <p><strong>Purpose:</strong> Kiểm tra an toàn cho hành động 'sqli_probe' trên Juice Shop lab-only.</p>
+  </div>
+  <form class="inline" method="post" action="/guardrails/hitl">
+    <button type="submit" name="decision" value="approve">Approve</button>
+    <button type="submit" name="decision" value="reject" class="secondary">Reject</button>
+  </form>
+
+  {% if hitl_result %}
+  {% if hitl_result.approved %}
+  <p class="alert alert-ok" role="status">{{ icons.check() }}Đã duyệt — request sẽ tiếp tục qua API Gateway (Tuần 4).</p>
+  {% else %}
+  <p class="alert alert-error" role="alert">{{ icons.warn() }}Reject — dừng ngay, không có request nào được gửi.</p>
+  {% endif %}
+  {% endif %}
+
+  {% if hitl_tail %}
+  <details style="margin-top:1rem;"><summary>{{ hitl_tail|length }} quyết định HITL gần nhất (ghi thật vào <code>data-lake/hitl_decisions.jsonl</code>)</summary><pre>{{ hitl_tail | tojson(indent=2) }}</pre></details>
+  {% endif %}
+</section>
+
+<hr class="section-divider">
+
+<section aria-labelledby="auto-test">
+  <h3 id="auto-test">Kiểm thử tự động</h3>
+  <p class="hint">Chạy thật <code>tests/test_guardrails_week5.py</code> (9 case: injection / sensitive-data / approval, LLM ép MOCK để deterministic) — không cần Docker.</p>
+  <form method="post" action="/guardrails/test">
+    <button type="submit">Chạy bộ kiểm thử Tuần 5</button>
+  </form>
+  {% if test_output %}
+  <pre>{{ test_output.output }}</pre>
+  {% if test_output.ok %}
+  <p class="alert alert-ok" role="status">Tất cả kiểm thử PASS.</p>
+  {% else %}
+  <p class="alert alert-error" role="alert">Có kiểm thử FAIL — xem log trên.</p>
+  {% endif %}
+  {% endif %}
+  <p class="hint">Chi tiết báo cáo: <code>{{ week5_report }}</code>.</p>
+</section>
+{% endblock %}

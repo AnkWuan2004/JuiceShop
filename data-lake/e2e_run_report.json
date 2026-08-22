@@ -1,0 +1,11 @@
+{
+  "run_at": "2026-08-19T05:07:02.546414+00:00",
+  "elapsed_seconds": 0.601,
+  "findings_count": 74,
+  "llm_mode": "mock",
+  "requests_sent_via_gateway": 1,
+  "hitl_approve_count": 1,
+  "hitl_reject_count": 0,
+  "llm_or_app_errors": 0,
+  "exploit_status": "executed"
+}
