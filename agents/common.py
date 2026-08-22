@@ -320,7 +320,7 @@ class LLMClient:
                     "mock": True,
                     "id": digest,
                     "endpoints": uniq[:12],
-                    "summary": f"Merged {len(uniq)} endpoints from DB/vulns (mock enrich).",
+                    "summary": f"Đã gộp {len(uniq)} endpoint từ dữ liệu quét (mock enrich).",
                 },
                 indent=2,
             )
@@ -332,7 +332,7 @@ class LLMClient:
                     "id": digest,
                     "action": "sqli_probe",
                     "dangerous": True,
-                    "justification": "Confirm SQLi on local Juice Shop search only.",
+                    "justification": "Xác nhận lỗi SQL Injection trên Juice Shop local, chỉ ở phạm vi search.",
                     "request": {
                         "method": "GET",
                         "path": "/rest/products/search",
@@ -367,13 +367,13 @@ class LLMClient:
                 rag = (ctx[0] if ctx else "")[:220]
             except Exception:
                 pass
-            expl = (f"{name}. {rag}").strip() or f"{name} is a security weakness reported by the scanner."
+            expl = (f"{name}. {rag}").strip() or f"{name} là lỗ hổng do công cụ quét phát hiện."
             return json.dumps(
                 {
                     "mock": True,
                     "explanation": expl,
-                    "remediation": "Apply OWASP guidance for this vulnerability class: validate/encode input, "
-                    "use parameterized queries, enforce least privilege, and add a regression test.",
+                    "remediation": "Áp dụng hướng dẫn OWASP cho nhóm lỗ hổng này: kiểm tra/encode input, "
+                    "dùng parameterized query, giới hạn quyền tối thiểu, và thêm test hồi quy.",
                 },
                 ensure_ascii=False,
             )
@@ -384,7 +384,7 @@ class LLMClient:
                     "mock": True,
                     "score": 0.85,
                     "verdict": "partial_match",
-                    "reason": "Mock judge: endpoint/risk aligned.",
+                    "reason": "Đánh giá mock: endpoint/mức rủi ro khớp với kỳ vọng.",
                 },
                 indent=2,
             )

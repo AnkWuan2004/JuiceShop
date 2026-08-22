@@ -3,10 +3,41 @@
 {% block title %}Tổng quan — Project Sentinel{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div class="page-kicker">{{ icons.dot("var(--sn-primary)") }}Operations overview</div>
+  <div class="page-kicker">{{ icons.dot("var(--sn-primary)") }}Tổng quan vận hành</div>
   <h2>Tổng quan hệ thống</h2>
   <p class="page-lead">Toàn cảnh rủi ro an ninh, mức độ bao phủ kiểm thử, và hoạt động của AI — cập nhật liên tục.</p>
 </div>
+
+<section aria-labelledby="journey" style="margin-bottom:1.5rem;">
+  <h3 id="journey" style="margin-top:0;">Hành trình 5 tuần</h3>
+  <div class="row">
+    <a class="card" href="/scan" style="text-decoration:none; flex:1; min-width:min(100%,220px);">
+      <div class="page-kicker" style="margin-bottom:.3rem;">{{ icons.dot("var(--sn-accent)") }}Tuần 1</div>
+      <strong class="card-title">Quét bảo mật</strong>
+      <p class="hint" style="margin:0;">Quét mã nguồn (SAST) và ứng dụng đang chạy (DAST) để tìm lỗ hổng thật.</p>
+    </a>
+    <a class="card" href="/knowledge" style="text-decoration:none; flex:1; min-width:min(100%,220px);">
+      <div class="page-kicker" style="margin-bottom:.3rem;">{{ icons.dot("var(--sn-series-3)") }}Tuần 2</div>
+      <strong class="card-title">Kho tri thức</strong>
+      <p class="hint" style="margin:0;">Xây kho tri thức bảo mật để AI tra cứu khi giải thích lỗ hổng.</p>
+    </a>
+    <a class="card" href="/agent" style="text-decoration:none; flex:1; min-width:min(100%,220px);">
+      <div class="page-kicker" style="margin-bottom:.3rem;">{{ icons.dot("var(--sn-series-4)") }}Tuần 3</div>
+      <strong class="card-title">Phân tích bằng AI</strong>
+      <p class="hint" style="margin:0;">AI đọc kết quả quét, phân loại rủi ro, và đề xuất cách khắc phục.</p>
+    </a>
+    <a class="card" href="/gateway" style="text-decoration:none; flex:1; min-width:min(100%,220px);">
+      <div class="page-kicker" style="margin-bottom:.3rem;">{{ icons.dot("var(--sn-primary)") }}Tuần 4</div>
+      <strong class="card-title">API Gateway</strong>
+      <p class="hint" style="margin:0;">Mọi hành động của AI phải đi qua lớp kiểm soát quyền &amp; giới hạn tốc độ.</p>
+    </a>
+    <a class="card" href="/guardrails" style="text-decoration:none; flex:1; min-width:min(100%,220px);">
+      <div class="page-kicker" style="margin-bottom:.3rem;">{{ icons.dot("var(--sn-good)") }}Tuần 5</div>
+      <strong class="card-title">Guardrails</strong>
+      <p class="hint" style="margin:0;">Chặn prompt injection, che dữ liệu nhạy cảm, và phê duyệt thủ công.</p>
+    </a>
+  </div>
+</section>
 
 <div class="tile-row">
   {% for t in tiles %}{{ t|safe }}{% endfor %}

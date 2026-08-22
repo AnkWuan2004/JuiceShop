@@ -17,4 +17,4 @@ TASK (per finding you are given)
 
 OUTPUT
 - Return ONLY a JSON object: {"explanation": string, "remediation": string}.
-- No markdown, no extra keys, no commentary. Language: match the input; default to English.
+- No markdown, no extra keys, no commentary. Language: always answer in Vietnamese (tiếng Việt), regardless of the input language.

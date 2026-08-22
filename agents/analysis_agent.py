@@ -193,13 +193,13 @@ def rag_snippets(query: str, k: int = 2) -> list[str]:
 
 # ── Rule-based remediation fallback (khi LLM mock/lỗi) ───────────────────
 _FALLBACK_FIX = [
-    (("sql", "sqli"), "Use parameterized queries / prepared statements; never concatenate user input into SQL. Add a test with a quote payload."),
-    (("xss", "cross site scripting", "cross-site scripting"), "Encode output for the correct context (HTML/JS/attr) and set a strict Content-Security-Policy. Add a test with a <script> payload."),
-    (("csrf", "anti-csrf"), "Add per-session anti-CSRF tokens and SameSite cookies; verify state-changing requests reject missing tokens."),
-    (("idor", "access control", "authorization"), "Enforce object-level authorization on the server; verify a user cannot access another user's object id."),
-    (("jwt", "auth", "authentication"), "Verify JWT signature/expiry with a strong secret; reject 'none' alg. Add a test for tampered/expired tokens."),
-    (("path traversal", "directory"), "Canonicalize and allowlist paths; reject '..' sequences. Verify a traversal payload is blocked."),
-    (("header", "misconfig", "configuration"), "Set security headers (CSP, X-Content-Type-Options, HSTS) and remove verbose error/version disclosure."),
+    (("sql", "sqli"), "Dùng parameterized query / prepared statement; không nối chuỗi input người dùng vào SQL. Thêm test với payload chứa dấu nháy đơn."),
+    (("xss", "cross site scripting", "cross-site scripting"), "Encode output đúng ngữ cảnh (HTML/JS/attribute) và áp dụng Content-Security-Policy chặt. Thêm test với payload <script>."),
+    (("csrf", "anti-csrf"), "Thêm anti-CSRF token theo session và cookie SameSite; xác nhận request thay đổi trạng thái bị từ chối khi thiếu token."),
+    (("idor", "access control", "authorization"), "Kiểm tra quyền truy cập ở tầng server cho từng object; xác nhận user không thể truy cập object id của người khác."),
+    (("jwt", "auth", "authentication"), "Xác thực chữ ký/thời hạn JWT bằng secret đủ mạnh; từ chối alg 'none'. Thêm test với token bị sửa/hết hạn."),
+    (("path traversal", "directory"), "Chuẩn hóa và giới hạn đường dẫn theo allowlist; từ chối chuỗi '..'. Xác nhận payload path traversal bị chặn."),
+    (("header", "misconfig", "configuration"), "Bật các header an toàn (CSP, X-Content-Type-Options, HSTS) và bỏ thông tin lỗi/version bị lộ."),
 ]
 
 
@@ -217,7 +217,7 @@ def fallback_remediation(name: str) -> str:
     for keys, fix in _FALLBACK_FIX:
         if any(k in low for k in keys):
             return fix
-    return "Follow OWASP guidance for this vulnerability class: validate/encode input, apply least privilege, and add a regression test."
+    return "Áp dụng hướng dẫn OWASP cho nhóm lỗ hổng này: kiểm tra/encode input, giới hạn quyền tối thiểu, và thêm test hồi quy."
 
 
 # ── LLM enrich (explanation + remediation), grounded ────────────────────
@@ -257,7 +257,7 @@ def enrich(group: dict, name: str, system: str, llm: LLMClient) -> tuple[str, st
         pass
     if not explanation:
         explanation = _clean_snippet(ctx[0]) if ctx else (
-            f"{name} is a security weakness reported by {', '.join(group['tools'])} at {group['location']}."
+            f"{name} là lỗ hổng do {', '.join(group['tools'])} phát hiện tại {group['location']}."
         )
     if not remediation:
         remediation = fallback_remediation(name)
