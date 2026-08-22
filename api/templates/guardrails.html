@@ -84,24 +84,57 @@
 <hr class="section-divider">
 
 <section class="card" aria-labelledby="hitl">
-  <h3 id="hitl" style="margin-top:0;">Live: Human-in-the-Loop trước request nguy hiểm</h3>
-  <p class="hint">Trước khi thực hiện một hành động rủi ro, hệ thống luôn hiển thị rõ Endpoint / Payload / Mục đích và chờ con người Approve/Reject. Ví dụ dưới đây lấy từ một đề xuất kiểm tra SQL Injection thật (xem thêm ví dụ do AI tự sinh tại trang <a href="/gateway">API Gateway</a>).</p>
-  <div class="check-line">
-    <p><strong>Endpoint:</strong> GET /rest/products/search</p>
-    <p><strong>Payload:</strong> {"q": "' OR '1'='1"}</p>
-    <p><strong>Mục đích:</strong> Kiểm tra an toàn cho hành động SQL Injection trên môi trường lab.</p>
-  </div>
+  <h3 id="hitl" style="margin-top:0;">Live: kiểm thử request có guardrail bảo vệ</h3>
+  <p class="hint">Nhập một request bất kỳ để kiểm thử — guardrail quét Payload/Mục đích trước (chặn nếu phát hiện injection), chỉ khi sạch mới chuyển sang bước Approve/Reject cho đúng request bạn vừa nhập (không phải ví dụ dựng sẵn).</p>
+  <form method="post" action="/guardrails/request_check">
+    <div class="row" style="align-items:flex-end;">
+      <div style="flex:0 0 auto; min-width:130px;">
+        <label for="req_method">Method</label>
+        <select id="req_method" name="method">
+          {% for m in ["GET", "POST", "PUT", "PATCH", "DELETE"] %}
+          <option value="{{ m }}" {% if (request_check.method if request_check else default_req.method) == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:2; min-width:min(100%,220px);">
+        <label for="req_path">Path</label>
+        <input type="text" id="req_path" name="path" value="{{ request_check.path if request_check else default_req.path }}">
+      </div>
+      <div style="flex:2; min-width:min(100%,220px);">
+        <label for="req_payload">Payload</label>
+        <input type="text" id="req_payload" name="payload" value="{{ request_check.payload if request_check else default_req.payload }}">
+      </div>
+    </div>
+    <label for="req_purpose" style="margin-top:.75rem;">Mục đích</label>
+    <textarea id="req_purpose" name="purpose" rows="2">{{ request_check.purpose if request_check else default_req.purpose }}</textarea>
+    <div style="margin-top:.75rem;"><button type="submit">Kiểm tra ngay</button></div>
+  </form>
+
+  {% if request_check %}
+  {% if request_check.blocked %}
+  <p class="alert alert-error" role="alert">{{ icons.warn() }}Guardrail đã chặn — phát hiện dấu hiệu injection trong Payload/Mục đích ({{ request_check.reasons | join(", ") }}). Không thể chuyển sang bước phê duyệt.</p>
+  {% else %}
+  <p class="alert alert-ok" role="status">{{ icons.check() }}Guardrail: không phát hiện bất thường — sẵn sàng chuyển sang phê duyệt.</p>
   <form class="inline" method="post" action="/guardrails/hitl">
+    <input type="hidden" name="method" value="{{ request_check.method }}">
+    <input type="hidden" name="path" value="{{ request_check.path }}">
+    <input type="hidden" name="payload" value="{{ request_check.payload }}">
+    <input type="hidden" name="purpose" value="{{ request_check.purpose }}">
     <button type="submit" name="decision" value="approve">Approve</button>
     <button type="submit" name="decision" value="reject" class="secondary">Reject</button>
   </form>
+  {% endif %}
+  {% endif %}
 
   {% if hitl_result %}
-  {% if hitl_result.approved %}
-  <p class="alert alert-ok" role="status">{{ icons.check() }}Đã duyệt — request sẽ tiếp tục qua API Gateway.</p>
-  {% else %}
-  <p class="alert alert-error" role="alert">{{ icons.warn() }}Reject — dừng ngay, không có request nào được gửi.</p>
-  {% endif %}
+  <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
+    <p><strong>Endpoint:</strong> {{ hitl_result.endpoint }}</p>
+    {% if hitl_result.approved %}
+    <p class="alert alert-ok" role="status">{{ icons.check() }}Đã duyệt — request sẽ tiếp tục qua API Gateway.</p>
+    {% else %}
+    <p class="alert alert-error" role="alert">{{ icons.warn() }}Reject — dừng ngay, không có request nào được gửi.</p>
+    {% endif %}
+  </div>
   {% endif %}
 
   {% if hitl_tail %}

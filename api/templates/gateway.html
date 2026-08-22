@@ -77,15 +77,23 @@
   <p class="hint">
     AI đọc các phát hiện gần nhất và tự đề xuất một hành động kiểm tra — sau đó Gateway ở trên sẽ
     quyết định có cho phép không, và nếu là hành động rủi ro, con người phải Approve/Reject trước.
+    Gõ gợi ý mục tiêu để thấy đề xuất thay đổi theo đúng ý bạn (để trống thì AI tự chọn từ dữ liệu fuzz gần nhất).
   </p>
-  <form method="post" action="/gateway/propose">
-    <button type="submit">Sinh đề xuất từ Exploit Agent</button>
+  <form class="inline" method="post" action="/gateway/propose">
+    <div style="flex:1; min-width:min(100%,260px);">
+      <label for="hint">Gợi ý mục tiêu (tuỳ chọn)</label>
+      <input type="text" id="hint" name="hint" value="{{ propose_result.hint if propose_result else '' }}" placeholder="vd: xss ở feedback, hoặc /rest/admin, hoặc để trống">
+    </div>
+    <div style="align-self:flex-end;">
+      <button type="submit">Sinh đề xuất từ Exploit Agent</button>
+    </div>
   </form>
 
   {% if propose_result %}
   {% set p = propose_result %}
   <div class="check-line" style="margin-top:1rem; padding-top:.85rem; border-top:1px solid var(--sn-grid);">
-    <p><strong>AI:</strong> {% if p.ai_real %}<span class="badge badge-high">real (DeepSeek)</span>{% else %}<span class="badge badge-medium">mock (chưa cấu hình OPENAI_API_KEY trên server)</span>{% endif %}</p>
+    <p><strong>AI:</strong> {% if p.ai_real %}<span class="badge badge-high">real (DeepSeek)</span>{% else %}<span class="badge badge-medium">mock (chưa cấu hình OPENAI_API_KEY trên server)</span>{% endif %}
+    {% if p.hint %}· gợi ý đã dùng: <em>{{ p.hint }}</em>{% endif %}</p>
     {% if p.error %}<p class="alert alert-error" role="alert">Lỗi gọi LLM: {{ p.error }}</p>{% endif %}
     <p><strong>Hành động đề xuất:</strong> <code>{{ p.action }}</code> {% if p.dangerous %}<span class="badge badge-high">nguy hiểm</span>{% endif %}</p>
     <p><strong>Endpoint:</strong> <code>{{ p.endpoint }}</code></p>

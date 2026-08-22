@@ -639,15 +639,19 @@ def gateway_simulate(request: Request, agent: str = Form(...), method: str = For
 
 
 @app.post("/gateway/propose", response_class=HTMLResponse)
-def gateway_propose(request: Request):
+def gateway_propose(request: Request, hint: str = Form("")):
     from common import LLMClient, parse_json_loose
     from exploit_agent import DANGEROUS_ACTIONS, SYSTEM
 
+    hint = hint.strip()
     findings = read_json_safe(FUZZ_FINDINGS) or []
     llm = LLMClient()
     was_real = not llm.mock
     try:
-        raw = llm.chat(SYSTEM, json.dumps({"fuzz_findings": findings[:5]}, ensure_ascii=False))
+        user_payload = {"fuzz_findings": findings[:5]}
+        if hint:
+            user_payload["user_hint"] = hint
+        raw = llm.chat(SYSTEM, json.dumps(user_payload, ensure_ascii=False))
         plan = parse_json_loose(raw)
         error = None
     except Exception as e:
@@ -665,6 +669,7 @@ def gateway_propose(request: Request):
     propose_result = {
         "plan": plan,
         "error": error,
+        "hint": hint,
         "action": action,
         "dangerous": dangerous,
         "ai_real": was_real,
@@ -707,11 +712,20 @@ def gateway_hitl(
 
 
 # ── Guardrails / HITL / che dữ liệu nhạy cảm — Tuần 5 ────────────────────
+DEFAULT_REQ = {
+    "method": "GET",
+    "path": "/rest/products/search",
+    "payload": json.dumps({"q": "' OR '1'='1"}, ensure_ascii=False),
+    "purpose": "Kiểm tra an toàn cho hành động SQL Injection trên môi trường lab.",
+}
+
+
 def _guardrails_ctx(
     request: Request,
     *,
     injection_result=None,
     redact_result=None,
+    request_check=None,
     hitl_result=None,
     test_output=None,
 ) -> dict:
@@ -724,8 +738,10 @@ def _guardrails_ctx(
         "pii_after": read_text_safe(PII_AFTER),
         "hitl_tail": tail_jsonl(HITL_LOG, 5),
         "week5_report": WEEK5_REPORT,
+        "default_req": DEFAULT_REQ,
         "injection_result": injection_result,
         "redact_result": redact_result,
+        "request_check": request_check,
         "hitl_result": hitl_result,
         "test_output": test_output,
         **base_ctx(request),
@@ -760,14 +776,41 @@ def guardrails_redact(request: Request, text: str = Form(...)):
     return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, redact_result=redact_result))
 
 
+@app.post("/guardrails/request_check", response_class=HTMLResponse)
+def guardrails_request_check(
+    request: Request,
+    method: str = Form(...),
+    path: str = Form(...),
+    payload: str = Form(...),
+    purpose: str = Form(...),
+):
+    from guardrails import check_input
+
+    r = check_input(f"{payload}\n{purpose}")
+    request_check = {
+        "method": method,
+        "path": path,
+        "payload": payload,
+        "purpose": purpose,
+        "blocked": r.blocked,
+        "reasons": r.reasons,
+    }
+    return templates.TemplateResponse(request, "guardrails.html", _guardrails_ctx(request, request_check=request_check))
+
+
 @app.post("/guardrails/hitl", response_class=HTMLResponse)
-def guardrails_hitl(request: Request, decision: str = Form(...)):
+def guardrails_hitl(
+    request: Request,
+    decision: str = Form(...),
+    method: str = Form(DEFAULT_REQ["method"]),
+    path: str = Form(DEFAULT_REQ["path"]),
+    payload: str = Form(DEFAULT_REQ["payload"]),
+    purpose: str = Form(DEFAULT_REQ["purpose"]),
+):
     from hitl_cli import request_approval
 
-    title = "Exploit action: sqli_probe"
-    endpoint = "GET /rest/products/search"
-    payload = json.dumps({"q": "' OR '1'='1"}, ensure_ascii=False)
-    purpose = "Kiểm tra an toàn cho hành động 'sqli_probe' trên Juice Shop lab-only."
+    endpoint = f"{method} {path}"
+    title = f"Kiểm thử request: {endpoint}"
     approved = decision == "approve"
     try:
         approved = request_approval(

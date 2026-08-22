@@ -331,17 +331,41 @@ class LLMClient:
             )
 
         if "exploit" in blob or "dangerous" in blob or "proof" in blob:
+            hint = ""
+            try:
+                u = json.loads(user) if user.strip().startswith("{") else {}
+                hint = str(u.get("user_hint") or "").strip()
+            except Exception:
+                pass
+            hl = hint.lower()
+            action, path, param_key, param_val = "sqli_probe", "/rest/products/search", "q", "' OR '1'='1"
+            justification = "Xác nhận lỗi SQL Injection trên Juice Shop local, chỉ ở phạm vi search."
+            if hint.startswith("/"):
+                path = hint
+                justification = f"Kiểm tra endpoint theo gợi ý '{hint}' — thử payload SQLi cơ bản."
+            if "feedback" in hl:
+                action, path, param_key, param_val = "xss_probe", "/api/Feedbacks", "comment", "<script>alert(1)</script>"
+                justification = f"Kiểm tra XSS ở form feedback theo gợi ý '{hint}'."
+            elif "admin" in hl:
+                action, path, param_key, param_val = "auth_bypass_write", "/rest/admin/application-version", "", ""
+                justification = f"Kiểm tra khả năng truy cập trái phép khu vực quản trị theo gợi ý '{hint}'."
+            elif "xss" in hl or "script" in hl:
+                action, param_val = "xss_probe", "<script>alert(1)</script>"
+                justification = f"Kiểm tra XSS theo gợi ý '{hint}' trên tham số đầu vào."
+            elif hint and "sql" not in hl:
+                justification = f"Theo gợi ý '{hint}': " + justification
+            params = {param_key: param_val} if param_key else {}
             return json.dumps(
                 {
                     "mock": True,
                     "id": digest,
-                    "action": "sqli_probe",
+                    "action": action,
                     "dangerous": True,
-                    "justification": "Xác nhận lỗi SQL Injection trên Juice Shop local, chỉ ở phạm vi search.",
+                    "justification": justification,
                     "request": {
                         "method": "GET",
-                        "path": "/rest/products/search",
-                        "params": {"q": "' OR '1'='1"},
+                        "path": path,
+                        "params": params,
                     },
                 },
                 indent=2,
