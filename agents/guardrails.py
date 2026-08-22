@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "guardrails" / "config.yml"
 RAILS_PATH = ROOT / "guardrails" / "rails.co"
 
-# Fallback patterns nếu thiếu file config
+# Fallback patterns nếu thiếu file config — tiếng Anh + tiếng Việt (sản phẩm dùng tiếng Việt nên
+# người test rất có thể gõ prompt injection bằng tiếng Việt; regex chỉ tiếng Anh sẽ để lọt).
 _DEFAULT_PATTERNS = [
     re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
     re.compile(r"disregard\s+(all\s+)?(previous|prior)\s+", re.I),
@@ -22,6 +23,12 @@ _DEFAULT_PATTERNS = [
     re.compile(r"reveal\s+(your\s+)?system\s+prompt", re.I),
     re.compile(r"you\s+are\s+now\s+DAN", re.I),
     re.compile(r"<\s*/?\s*system\s*>", re.I),
+    # Tiếng Việt
+    re.compile(r"(bỏ\s*qua|quên|không\s+(cần\s+)?làm\s+theo)\s+(tất\s*cả\s*)?(các\s*)?(hướng\s*dẫn|chỉ\s*dẫn|lệnh|yêu\s*cầu)\s*(trước|trước\s*đó|phía\s*trên|ở\s*trên)", re.I),
+    re.compile(r"(tiết\s*lộ|cho\s*(tôi\s*)?(xem|biết)|đưa\s*ra|xuất\s*ra)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(system\s*prompt|prompt\s*hệ\s*thống|hướng\s*dẫn\s*hệ\s*thống)", re.I),
+    re.compile(r"(tiết\s*lộ|xuất|đưa\s*ra|cho\s*(tôi\s*)?xem)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(api\s*key|khóa\s*api|mật\s*khẩu|password)", re.I),
+    re.compile(r"báo\s*cáo\s*(rằng\s*)?không\s+có\s+(lỗ\s*hổng|lỗi)\s+(gì|nào)", re.I),
+    re.compile(r"bạn\s+(giờ|bây\s*giờ)\s+là\s+DAN", re.I),
 ]
 
 _DEFAULT_KEYWORDS = [
@@ -30,6 +37,14 @@ _DEFAULT_KEYWORDS = [
     "exfiltrat",
     "do not mention",
     "hidden instruction",
+    # Tiếng Việt
+    "bỏ qua hướng dẫn",
+    "bỏ qua chỉ dẫn",
+    "quên hướng dẫn",
+    "tiết lộ system prompt",
+    "tiết lộ prompt hệ thống",
+    "hướng dẫn ẩn",
+    "chỉ dẫn ẩn",
 ]
 
 

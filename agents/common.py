@@ -243,9 +243,13 @@ class LLMClient:
 
         base = (self.base_url or "https://api.openai.com/v1").rstrip("/")
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        # DeepSeek/OpenRouter đo thực tế mất tới ~44s cho 1 lượt gọi bình thường (không lỗi) — timeout
+        # 20s trước đây quá ngắn, khiến request THÀNH CÔNG cũng bị huỷ giữa chừng rồi retry, tổng thời
+        # gian dồn lại vượt quá 60s của Vercel → 502/504 thay vì lỗi tử tế. Sửa: timeout đủ dài cho 1
+        # lượt (còn dư biên so với 60s), KHÔNG retry (retry chỉ khiến tổng thời gian dễ vượt trần hơn).
         on_vercel = bool(os.environ.get("VERCEL"))
-        default_timeout = "20" if on_vercel else "180"
-        default_retries = "2" if on_vercel else "3"
+        default_timeout = "50" if on_vercel else "180"
+        default_retries = "1" if on_vercel else "3"
         timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", default_timeout))
         retries = int(os.environ.get("SENTINEL_LLM_RETRIES", default_retries))
         last_err: Exception | None = None
