@@ -608,6 +608,7 @@ def _gateway_ctx(request: Request, *, sim_result=None, propose_result=None, hitl
     return {
         "kong_yml": read_text_safe(KONG_YML),
         "allowlist_json": read_text_safe(ALLOWLIST_JSON),
+        "allowlist": read_json_safe(ALLOWLIST_JSON),
         "agents": GATEWAY_AGENTS,
         "request_log_tail": tail_jsonl(REQUEST_LOG, 5),
         "hitl_tail": tail_jsonl(HITL_LOG, 5),

@@ -10,6 +10,27 @@
   </p>
 </div>
 
+<section aria-labelledby="allowlist">
+  <h3 id="allowlist" style="margin-top:0;">Phạm vi mỗi agent được phép truy cập</h3>
+  <p class="hint">Mọi đề xuất của AI đều bị giới hạn trong đúng phạm vi này — kể cả khi AI "muốn" đi xa hơn.</p>
+  {% if allowlist and allowlist.agents %}
+  <div class="row">
+    {% for name, a in allowlist.agents.items() %}
+    <div class="card">
+      <strong class="card-title">{{ name }}</strong>
+      <p><strong>Được phép gọi:</strong> {% for m in a.methods %}<span class="badge badge-low">{{ m }}</span> {% endfor %}</p>
+      <p><strong>Trong phạm vi:</strong> {% for p in a.path_prefixes %}<code>{{ p }}/*</code> {% endfor %}</p>
+      {% if a.path_deny_prefixes %}<p><strong>Luôn bị chặn:</strong> {% for p in a.path_deny_prefixes %}<code>{{ p }}/*</code> {% endfor %}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="alert">Chưa đọc được cấu hình allowlist.</p>
+  {% endif %}
+</section>
+
+<hr class="section-divider">
+
 <section class="card" aria-labelledby="sim">
   <h3 id="sim" style="margin-top:0;">Live: thử một request qua Gateway</h3>
   <p class="hint">Chọn một request để kiểm tra — kết quả bên dưới là quyết định thật của Gateway, không phải dữ liệu dựng sẵn.</p>
