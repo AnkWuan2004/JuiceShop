@@ -219,13 +219,18 @@ class LLMClient:
 
     def _rest_chat(self, messages: list[dict]) -> str:
         """REST /chat/completions bằng requests — dùng khi không có package openai (vd OpenRouter).
-        Timeout dài (model chậm) + retry vài lần cho lỗi mạng transient."""
+        Timeout dài (model chậm) + retry vài lần cho lỗi mạng transient — trừ trên Vercel, nơi
+        maxDuration=60s (vercel.json): timeout dài + nhiều retry sẽ bị Vercel giết cứng (504
+        FUNCTION_INVOCATION_TIMEOUT) trước khi code kịp bắt exception và hiển thị lỗi tử tế."""
         import requests  # type: ignore
 
         base = (self.base_url or "https://api.openai.com/v1").rstrip("/")
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", "180"))
-        retries = int(os.environ.get("SENTINEL_LLM_RETRIES", "3"))
+        on_vercel = bool(os.environ.get("VERCEL"))
+        default_timeout = "20" if on_vercel else "180"
+        default_retries = "2" if on_vercel else "3"
+        timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", default_timeout))
+        retries = int(os.environ.get("SENTINEL_LLM_RETRIES", default_retries))
         last_err: Exception | None = None
         for attempt in range(retries):
             try:
