@@ -144,12 +144,17 @@
       {% for h in hitl_tail %}
       <li>
         <strong>{{ "Approve" if h.decision == "approve" else "Reject" }}</strong>
+        {% if h.source %}<span class="badge badge-low">{{ h.source }}</span>{% endif %}
         {% if h.endpoint %} — {{ h.endpoint }}{% endif %}
         {% if h.purpose %} · {{ h.purpose }}{% endif %}
       </li>
       {% endfor %}
     </ul>
   </details>
+  <p class="hint">
+    Lưu vào <code>data-lake/hitl_decisions.jsonl</code> — bền vững khi chạy local; trên bản deploy Vercel,
+    filesystem chỉ ghi tạm nên lịch sử có thể mất khi server khởi động lại (cold start).
+  </p>
   {% endif %}
 </section>
 

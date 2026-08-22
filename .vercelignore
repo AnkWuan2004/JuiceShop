@@ -6,4 +6,3 @@ docker-compose*.yml
 __pycache__/
 *.pyc
 *.pdf
-data-lake/traces/

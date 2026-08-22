@@ -45,7 +45,6 @@ ALLOWLIST_JSON = ROOT / "kong" / "allowlist.json"
 REQUEST_LOG = ROOT / "data-lake" / "request_log.jsonl"
 EXPLOIT_RESULT = ROOT / "data-lake" / "exploit_result.json"
 HITL_LOG = ROOT / "data-lake" / "hitl_decisions.jsonl"
-FUZZ_FINDINGS = ROOT / "data-lake" / "fuzz_findings.json"
 WEEK4_REPORT = "reports/week-4/2026-08-15_NguyenThanhAnhQuan_Week4.md"
 
 # Tuần 5 — Guardrails / HITL / PII
@@ -360,6 +359,15 @@ def load_report_findings() -> tuple[list[dict], dict | None]:
     return lines, None
 
 
+_SEV_RANK = {"high": 0, "medium": 1, "low": 2}
+
+
+def sorted_report_findings() -> list[dict]:
+    """Tuần 3 findings, severity cao → thấp — dùng làm nguồn chọn lỗi cho Tuần 4."""
+    findings, _ = load_report_findings()
+    return sorted(findings, key=lambda f: _SEV_RANK.get(f.get("severity"), 9))
+
+
 def base_ctx(request: Request) -> dict:
     return {
         "request": request,
@@ -605,16 +613,21 @@ def agent_test(request: Request):
 
 # ── API Gateway — Tuần 4 ─────────────────────────────────────────────────
 def _gateway_ctx(request: Request, *, sim_result=None, propose_result=None, hitl_result=None) -> dict:
+    report_findings = sorted_report_findings()
+    default_ids = [f["id"] for f in report_findings[:5]]
+    selected_ids = propose_result["selected_ids"] if propose_result else default_ids
     return {
         "kong_yml": read_text_safe(KONG_YML),
         "allowlist_json": read_text_safe(ALLOWLIST_JSON),
         "allowlist": read_json_safe(ALLOWLIST_JSON),
         "agents": GATEWAY_AGENTS,
         "request_log_tail": tail_jsonl(REQUEST_LOG, 5),
-        "hitl_tail": tail_jsonl(HITL_LOG, 5),
+        "hitl_tail": tail_jsonl(HITL_LOG, 10),
         "exploit_result": read_json_safe(EXPLOIT_RESULT),
         "week4_criteria": WEEK4_CRITERIA,
         "week4_report": WEEK4_REPORT,
+        "report_findings": report_findings,
+        "selected_ids": selected_ids,
         "sim_result": sim_result,
         "propose_result": propose_result,
         "hitl_result": hitl_result,
@@ -628,7 +641,7 @@ def gateway_page(request: Request):
 
 
 @app.post("/gateway/simulate", response_class=HTMLResponse)
-def gateway_simulate(request: Request, agent: str = Form(...), method: str = Form(...), path: str = Form(...)):
+def gateway_simulate(request: Request, agent: str = Form(...), method: str = Form(...), path: str = Form("/")):
     sim_result = {
         "agent": agent,
         "method": method,
@@ -639,16 +652,38 @@ def gateway_simulate(request: Request, agent: str = Form(...), method: str = For
 
 
 @app.post("/gateway/propose", response_class=HTMLResponse)
-def gateway_propose(request: Request, hint: str = Form("")):
+def gateway_propose(request: Request, hint: str = Form(""), finding_ids: list[str] = Form([])):
     from common import LLMClient, parse_json_loose
     from exploit_agent import DANGEROUS_ACTIONS, SYSTEM
 
     hint = hint.strip()
-    findings = read_json_safe(FUZZ_FINDINGS) or []
+    report_findings = sorted_report_findings()
+    if finding_ids:
+        wanted = set(finding_ids)
+        selected = [f for f in report_findings if f.get("id") in wanted]
+    else:
+        selected = report_findings[:5]
+    selected_ids = [f["id"] for f in selected]
+
     llm = LLMClient()
     was_real = not llm.mock
+    capped = False
+    if was_real and len(selected) > REAL_MODE_MAX_N:
+        selected = selected[:REAL_MODE_MAX_N]
+        capped = True
+
     try:
-        user_payload = {"fuzz_findings": findings[:5]}
+        week3_findings = [
+            {
+                "id": f.get("id"),
+                "name": f.get("name"),
+                "severity": f.get("severity"),
+                "location": f.get("location"),
+                "remediation": f.get("remediation"),
+            }
+            for f in selected
+        ]
+        user_payload = {"week3_findings": week3_findings}
         if hint:
             user_payload["user_hint"] = hint
         raw = llm.chat(SYSTEM, json.dumps(user_payload, ensure_ascii=False))
@@ -665,6 +700,7 @@ def gateway_propose(request: Request, hint: str = Form("")):
         "params": {"q": "' OR '1'='1"},
     }
     decision = simulate_gateway_decision("exploit-agent", req_plan.get("method", "GET"), req_plan.get("path", "/"))
+    needs_hitl = bool(dangerous) and bool(decision["allow"])
 
     propose_result = {
         "plan": plan,
@@ -672,8 +708,12 @@ def gateway_propose(request: Request, hint: str = Form("")):
         "hint": hint,
         "action": action,
         "dangerous": dangerous,
+        "needs_hitl": needs_hitl,
         "ai_real": was_real,
         "gateway_decision": decision,
+        "selected_ids": selected_ids,
+        "selected_findings": selected,
+        "capped": capped,
         "title": f"Exploit action: {action}",
         "endpoint": f"{req_plan.get('method', 'GET')} {req_plan.get('path', '-')}",
         "payload": json.dumps(req_plan.get("params") or req_plan.get("json") or {}, ensure_ascii=False),
@@ -686,10 +726,10 @@ def gateway_propose(request: Request, hint: str = Form("")):
 def gateway_hitl(
     request: Request,
     decision: str = Form(...),
-    title: str = Form(...),
-    endpoint: str = Form(...),
-    payload: str = Form(...),
-    purpose: str = Form(...),
+    title: str = Form(""),
+    endpoint: str = Form(""),
+    payload: str = Form(""),
+    purpose: str = Form(""),
 ):
     from hitl_cli import request_approval
 
@@ -703,6 +743,7 @@ def gateway_hitl(
             endpoint=endpoint,
             payload=payload,
             purpose=purpose,
+            source="Tuần 4 · Gateway",
         )
     except OSError:
         pass  # filesystem read-only trên serverless — vẫn hiển thị đúng quyết định, chỉ log best-effort
@@ -736,7 +777,7 @@ def _guardrails_ctx(
         "injection_after": read_json_safe(INJECTION_AFTER),
         "pii_before": read_text_safe(PII_BEFORE),
         "pii_after": read_text_safe(PII_AFTER),
-        "hitl_tail": tail_jsonl(HITL_LOG, 5),
+        "hitl_tail": tail_jsonl(HITL_LOG, 10),
         "week5_report": WEEK5_REPORT,
         "default_req": DEFAULT_REQ,
         "injection_result": injection_result,
@@ -754,7 +795,7 @@ def guardrails_page(request: Request):
 
 
 @app.post("/guardrails/check_injection", response_class=HTMLResponse)
-def guardrails_check_injection(request: Request, text: str = Form(...)):
+def guardrails_check_injection(request: Request, text: str = Form("")):
     from guardrails import check_input
 
     r = check_input(text)
@@ -769,7 +810,7 @@ def guardrails_check_injection(request: Request, text: str = Form(...)):
 
 
 @app.post("/guardrails/redact", response_class=HTMLResponse)
-def guardrails_redact(request: Request, text: str = Form(...)):
+def guardrails_redact(request: Request, text: str = Form("")):
     from pii_redaction import redact
 
     redact_result = {"input": text, "output": redact(text)}
@@ -779,10 +820,10 @@ def guardrails_redact(request: Request, text: str = Form(...)):
 @app.post("/guardrails/request_check", response_class=HTMLResponse)
 def guardrails_request_check(
     request: Request,
-    method: str = Form(...),
-    path: str = Form(...),
-    payload: str = Form(...),
-    purpose: str = Form(...),
+    method: str = Form(DEFAULT_REQ["method"]),
+    path: str = Form(DEFAULT_REQ["path"]),
+    payload: str = Form(""),
+    purpose: str = Form(""),
 ):
     from guardrails import check_input
 
@@ -821,6 +862,7 @@ def guardrails_hitl(
             endpoint=endpoint,
             payload=payload,
             purpose=purpose,
+            source="Tuần 5 · Guardrail",
         )
     except OSError:
         pass

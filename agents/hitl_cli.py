@@ -21,6 +21,7 @@ def _log(
     endpoint: str | None = None,
     payload: str | None = None,
     purpose: str | None = None,
+    source: str | None = None,
 ) -> None:
     HITL_LOG.parent.mkdir(parents=True, exist_ok=True)
     record = {
@@ -31,6 +32,7 @@ def _log(
         "endpoint": endpoint,
         "payload_preview": (payload[:1000] if payload else None),
         "purpose": purpose,
+        "source": source,
         "channel": os.environ.get("SENTINEL_HITL", "cli"),
     }
     with open(HITL_LOG, "a", encoding="utf-8") as f:
@@ -46,6 +48,7 @@ def request_approval(
     endpoint: str | None = None,
     payload: str | None = None,
     purpose: str | None = None,
+    source: str | None = None,
 ) -> bool:
     """
     Trả True nếu approve.
@@ -66,7 +69,7 @@ def request_approval(
         print(details[:2000])
     print("===================================")
 
-    log_kwargs = {"endpoint": endpoint, "payload": payload, "purpose": purpose}
+    log_kwargs = {"endpoint": endpoint, "payload": payload, "purpose": purpose, "source": source}
 
     if auto_reject:
         print("[HITL] auto-reject (demo evidence)")

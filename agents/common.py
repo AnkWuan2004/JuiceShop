@@ -175,8 +175,25 @@ class LLMClient:
                 out = self._openai_chat(system, user)
         except Exception as e:
             err = str(e)
-            out = json.dumps({"error": err, "mock_fallback": True})
             write_trace("llm", "error", {"error": err})
+            if self.mock:
+                # Mock chỉ dùng cho test/local offline — không để 1 bug trong _mock_response làm
+                # sập cả bộ test, fallback JSON lỗi vẫn đủ để caller xử lý.
+                out = json.dumps({"error": err, "mock_fallback": True})
+            else:
+                # Real mode (đang bật AI thật, vd trên Vercel đã cấu hình OPENAI_API_KEY): KHÔNG
+                # lặng lẽ trả dữ liệu giả khi gọi AI thất bại — raise để route hiển thị lỗi rõ ràng
+                # cho người xem thay vì trông như "AI trả kết quả rác/không đổi gì".
+                latency_ms = int((time.time() - t0) * 1000)
+                write_trace(
+                    "llm", "response",
+                    {
+                        "mock": False, "base_url": self.base_url, "model": self.model,
+                        "preview": None, "est_tokens_out": 0, "est_tokens_in": tin,
+                        "est_cost_usd": 0.0, "latency_ms": latency_ms, "error": err,
+                    },
+                )
+                raise RuntimeError(f"Không gọi được AI thật (DeepSeek/OpenRouter): {err}") from e
         latency_ms = int((time.time() - t0) * 1000)
         tout = est_tokens(out)
         cost = est_cost_usd(tin, tout, mock=self.mock)
@@ -275,6 +292,41 @@ class LLMClient:
                     "vulnerabilities": [{"path": "/rest/products/search", "issue": "SQLi"}],
                 },
                 indent=2,
+            )
+
+        # Tuần 3 — Security Analysis Agent: điền explanation + remediation, grounded trên RAG.
+        # Check SỚM và cụ thể (literal "Security Analysis Agent" ở đầu system prompt) — phải đứng
+        # trước các check chung như "exploit" (system prompt phân tích có chữ "exploitation" nên
+        # naive `"exploit" in blob` sẽ khớp nhầm sang nhánh Exploit Agent nếu để sau).
+        if "security analysis agent" in blob or ("explanation" in blob and "remediation" in blob and "finding" in blob):
+            name = "the finding"
+            desc = ""
+            rag = ""
+            try:
+                u = json.loads(user) if user.strip().startswith("{") else {}
+                name = str(u.get("name") or name)
+                desc = str((u.get("finding") or {}).get("scanner_description") or "").strip()
+                ctx = u.get("rag_context") or []
+                rag = (ctx[0] if ctx else "")[:220]
+            except Exception:
+                pass
+            # Ưu tiên mô tả thật từ chính scanner (luôn khớp đúng finding này) hơn đoạn RAG — RAG chỉ
+            # là tài liệu tham khảo chung, có thể lệch chủ đề với finding cụ thể (VD: rule CI/CD YAML
+            # không có doc RAG chuyên biệt, RAG trả về đoạn gần nhất về SQLi/XSS — dễ gây hiểu nhầm).
+            if desc:
+                expl = f"{name}: {desc[:280]}"
+            else:
+                expl = (f"{name}. {rag}").strip() or f"{name} là lỗ hổng do công cụ quét phát hiện."
+            # remediation để trống — nhường cho analysis_agent.py::fallback_remediation(name) xử lý,
+            # vì hàm đó có bảng gợi ý theo từng loại lỗ hổng (sql/xss/csrf/idor/jwt/...) chi tiết hơn
+            # 1 câu chung cứng ở đây, và tránh lặp y hệt cho toàn bộ 74 finding.
+            return json.dumps(
+                {
+                    "mock": True,
+                    "explanation": expl,
+                    "remediation": "",
+                },
+                ensure_ascii=False,
             )
 
         if "attack surface" in blob or ("recon" in blob and "endpoint" in blob) or "db_map" in blob:
@@ -383,28 +435,6 @@ class LLMClient:
                     ],
                 },
                 indent=2,
-            )
-
-        # Tuần 3 — Security Analysis Agent: điền explanation + remediation, grounded trên RAG
-        if "security analysis agent" in blob or ("explanation" in blob and "remediation" in blob and "finding" in blob):
-            name = "the finding"
-            rag = ""
-            try:
-                u = json.loads(user) if user.strip().startswith("{") else {}
-                name = str(u.get("name") or name)
-                ctx = u.get("rag_context") or []
-                rag = (ctx[0] if ctx else "")[:220]
-            except Exception:
-                pass
-            expl = (f"{name}. {rag}").strip() or f"{name} là lỗ hổng do công cụ quét phát hiện."
-            return json.dumps(
-                {
-                    "mock": True,
-                    "explanation": expl,
-                    "remediation": "Áp dụng hướng dẫn OWASP cho nhóm lỗ hổng này: kiểm tra/encode input, "
-                    "dùng parameterized query, giới hạn quyền tối thiểu, và thêm test hồi quy.",
-                },
-                ensure_ascii=False,
             )
 
         if "judge" in blob or "evaluate" in blob or "verdict" in blob:

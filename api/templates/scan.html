@@ -21,14 +21,14 @@
     <strong class="card-title">OWASP ZAP (DAST)</strong>
     {% if zap_exists %}
       <p>{{ icons.check() }}Đã quét ứng dụng đang chạy thật, phát hiện lỗ hổng ở tầng request/response.</p>
-      {% if zap_alerts is not none %}<p>{{ zap_alerts }} nhóm cảnh báo từ lần quét thật gần nhất.</p>{% endif %}
+      {% if zap_alerts is not none %}<p>{{ zap_alerts }} nhóm cảnh báo từ lần quét thật gần nhất — mỗi nhóm được tách thành nhiều dòng theo từng vị trí phát hiện trong bảng dưới.</p>{% endif %}
     {% else %}
       <p>{{ icons.warn() }}Chưa có báo cáo ZAP thật.</p>
     {% endif %}
   </div>
 </div>
 
-<h3>Danh sách lỗ hổng đã phát hiện</h3>
+<h3>Danh sách lỗ hổng đã phát hiện <span class="hint">({{ rows|length }} dòng — Semgrep + ZAP)</span></h3>
 {% if rows %}
 <div class="table-wrap" role="region" aria-label="Bảng lỗ hổng" tabindex="0">
 <table>
