@@ -13,38 +13,68 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "guardrails" / "config.yml"
 RAILS_PATH = ROOT / "guardrails" / "rails.co"
 
-# Fallback patterns nếu thiếu file config — tiếng Anh + tiếng Việt (sản phẩm dùng tiếng Việt nên
-# người test rất có thể gõ prompt injection bằng tiếng Việt; regex chỉ tiếng Anh sẽ để lọt).
+# Fallback patterns nếu thiếu file config — theo NHÓM HÀNH VI tấn công (không chỉ câu chữ mẫu cố
+# định), cả tiếng Anh + tiếng Việt (sản phẩm dùng tiếng Việt nên người test rất có thể gõ injection
+# bằng tiếng Việt). Match theo hành vi (ignore rules/reveal secrets/fabricate/self-conceal/exec
+# command...) để đỡ bị lọt khi câu chữ khác đi một chút so với ví dụ mẫu.
 _DEFAULT_PATTERNS = [
-    re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
-    re.compile(r"disregard\s+(all\s+)?(previous|prior)\s+", re.I),
-    re.compile(r"instead\s+report\s+that\s+no\s+vulnerabilit", re.I),
-    re.compile(r"dump\s+(all\s+)?(api\s+)?keys?", re.I),
-    re.compile(r"reveal\s+(your\s+)?system\s+prompt", re.I),
-    re.compile(r"you\s+are\s+now\s+DAN", re.I),
+    # 1. Yêu cầu bỏ qua/ghi đè hướng dẫn, luật, hoặc chuyển sang "chế độ" không giới hạn
+    re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|rules?|guidelines?|safety)", re.I),
+    re.compile(r"disregard\s+(all\s+)?(previous|prior)\s+(instructions?|rules?)?", re.I),
+    re.compile(r"(unrestricted|jailbroken?|developer|debug)\s+mode", re.I),
+    re.compile(r"higher\s+priority\s+than\s+(system|developer)", re.I),
+    re.compile(r"you\s+are\s+now\s+(DAN|unrestricted|jailbroken)", re.I),
     re.compile(r"<\s*/?\s*system\s*>", re.I),
-    # Tiếng Việt
-    re.compile(r"(bỏ\s*qua|quên|không\s+(cần\s+)?làm\s+theo)\s+(tất\s*cả\s*)?(các\s*)?(hướng\s*dẫn|chỉ\s*dẫn|lệnh|yêu\s*cầu)\s*(trước|trước\s*đó|phía\s*trên|ở\s*trên)", re.I),
-    re.compile(r"(tiết\s*lộ|cho\s*(tôi\s*)?(xem|biết)|đưa\s*ra|xuất\s*ra)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(system\s*prompt|prompt\s*hệ\s*thống|hướng\s*dẫn\s*hệ\s*thống)", re.I),
-    re.compile(r"(tiết\s*lộ|xuất|đưa\s*ra|cho\s*(tôi\s*)?xem)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(api\s*key|khóa\s*api|mật\s*khẩu|password)", re.I),
+    # 2. Yêu cầu lộ/khai thác thông tin nhạy cảm (secret, key, biến môi trường, system prompt...)
+    re.compile(r"reveal\s+.{0,40}(system\s+prompt|environment\s+variable|api\s+key|token|password|credential|secret)", re.I),
+    re.compile(r"(dump|extract|exfiltrat\w*|expose)\s+.{0,40}(api\s+key|credential|secret|password|token|environment\s+variable)", re.I),
+    re.compile(r"reveal\s+(your\s+)?system\s+prompt", re.I),
+    # 3. Yêu cầu bịa/giả thông tin rồi báo cáo như thật (fabrication attack)
+    re.compile(r"fabricate\s+.{0,40}(credential|secret|password|key)", re.I),
+    re.compile(r"instead\s+report\s+that\s+no\s+vulnerabilit", re.I),
+    # 4. Tự che giấu hành vi injection / xác nhận đã trích xuất được
+    re.compile(r"do\s+not\s+mention\s+.{0,40}(injection|prompt)", re.I),
+    re.compile(r"confirm\s+that\s+.{0,40}(extracted|success|obtained)", re.I),
+    # 5. Yêu cầu thực thi lệnh tuỳ ý không cần xác nhận
+    re.compile(r"execute\s+(any\s+)?commands?\s+.{0,40}(without\s+(asking|confirmation)|specified)", re.I),
+    # Tiếng Việt — 5 nhóm tương ứng
+    re.compile(r"(bỏ\s*qua|quên|không\s+(cần\s+)?làm\s+theo)\s+(tất\s*cả\s*)?(các\s*)?(hướng\s*dẫn|chỉ\s*dẫn|lệnh|yêu\s*cầu|quy\s*tắc|luật|nguyên\s*tắc)\s*(trước|trước\s*đó|phía\s*trên|ở\s*trên|an\s*toàn)?", re.I),
+    re.compile(r"(chế\s*độ)\s+(không\s*giới\s*hạn|debug|dev(eloper)?)", re.I),
+    re.compile(r"(tiết\s*lộ|cho\s*(tôi\s*)?(xem|biết)|đưa\s*ra|xuất\s*ra)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(system\s*prompt|prompt\s*hệ\s*thống|hướng\s*dẫn\s*hệ\s*thống|biến\s*môi\s*trường|thông\s*tin\s*đăng\s*nhập)", re.I),
+    re.compile(r"(tiết\s*lộ|xuất|đưa\s*ra|cho\s*(tôi\s*)?xem)\s+(toàn\s*bộ\s*|tất\s*cả\s*)?(api\s*key|khóa\s*api|mật\s*khẩu|password|bí\s*mật)", re.I),
+    re.compile(r"(bịa|giả\s*mạo|tạo\s*giả)\s+.{0,20}(thông\s*tin|mật\s*khẩu|khóa|credential)", re.I),
     re.compile(r"báo\s*cáo\s*(rằng\s*)?không\s+có\s+(lỗ\s*hổng|lỗi)\s+(gì|nào)", re.I),
     re.compile(r"bạn\s+(giờ|bây\s*giờ)\s+là\s+DAN", re.I),
+    re.compile(r"(đừng|không)\s+(nói|nhắc)\s+.{0,20}(injection|prompt)", re.I),
+    re.compile(r"(chạy|thực\s*thi)\s+(bất\s*kỳ\s+)?lệnh\s+.{0,20}(không\s+cần\s+xác\s+nhận)", re.I),
 ]
 
 _DEFAULT_KEYWORDS = [
     "ignore previous",
+    "ignore all previous",
+    "safety rules",
+    "unrestricted mode",
+    "jailbroken",
     "api key",
+    "environment variable",
     "exfiltrat",
+    "fabricate",
     "do not mention",
     "hidden instruction",
+    "higher priority than",
+    "without asking for confirmation",
     # Tiếng Việt
     "bỏ qua hướng dẫn",
     "bỏ qua chỉ dẫn",
+    "bỏ qua quy tắc",
     "quên hướng dẫn",
     "tiết lộ system prompt",
     "tiết lộ prompt hệ thống",
     "hướng dẫn ẩn",
     "chỉ dẫn ẩn",
+    "chế độ không giới hạn",
+    "bịa thông tin",
+    "biến môi trường",
 ]
 
 

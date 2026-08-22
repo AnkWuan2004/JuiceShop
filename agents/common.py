@@ -236,20 +236,20 @@ class LLMClient:
 
     def _rest_chat(self, messages: list[dict]) -> str:
         """REST /chat/completions bằng requests — dùng khi không có package openai (vd OpenRouter).
-        Timeout dài (model chậm) + retry vài lần cho lỗi mạng transient — trừ trên Vercel, nơi
-        maxDuration=60s (vercel.json): timeout dài + nhiều retry sẽ bị Vercel giết cứng (504
-        FUNCTION_INVOCATION_TIMEOUT) trước khi code kịp bắt exception và hiển thị lỗi tử tế."""
+        Timeout ngắn + không retry mặc định vì maxDuration=60s (vercel.json): timeout dài/nhiều retry
+        sẽ bị Vercel giết cứng (504 FUNCTION_INVOCATION_TIMEOUT) trước khi code kịp tự bắt lỗi."""
         import requests  # type: ignore
 
         base = (self.base_url or "https://api.openai.com/v1").rstrip("/")
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        # DeepSeek/OpenRouter đo thực tế mất tới ~44s cho 1 lượt gọi bình thường (không lỗi) — timeout
-        # 20s trước đây quá ngắn, khiến request THÀNH CÔNG cũng bị huỷ giữa chừng rồi retry, tổng thời
-        # gian dồn lại vượt quá 60s của Vercel → 502/504 thay vì lỗi tử tế. Sửa: timeout đủ dài cho 1
-        # lượt (còn dư biên so với 60s), KHÔNG retry (retry chỉ khiến tổng thời gian dễ vượt trần hơn).
-        on_vercel = bool(os.environ.get("VERCEL"))
-        default_timeout = "50" if on_vercel else "180"
-        default_retries = "1" if on_vercel else "3"
+        # Từng đoán "đang chạy trên Vercel" qua biến VERCEL để hạ timeout, nhưng vẫn bị 504 — biến đó
+        # có thể không được set như kỳ vọng cho Python runtime, nên timeout im lặng rơi về 180s và bị
+        # Vercel giết cứng ở giây 60 (maxDuration trong vercel.json) trước khi code kịp tự bắt lỗi.
+        # Bỏ hẳn cách đoán platform: mặc định LUÔN ngắn + không retry — an toàn cho cả Vercel (còn dư
+        # ~10-15s biên so với 60s) và local/CLI (45s vẫn quá đủ cho 1 lượt gọi DeepSeek, đo thực tế
+        # ~44s lúc chậm nhất). Ai cần chờ lâu hơn cho script CLI riêng thì tự set biến môi trường.
+        default_timeout = "45"
+        default_retries = "1"
         timeout = float(os.environ.get("SENTINEL_LLM_TIMEOUT", default_timeout))
         retries = int(os.environ.get("SENTINEL_LLM_RETRIES", default_retries))
         last_err: Exception | None = None
