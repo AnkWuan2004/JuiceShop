@@ -2,8 +2,8 @@
   {
     "url": "http://localhost:8000/ftp/?q=",
     "status": 404,
-    "latency_ms": 1,
-    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"2599c23175041d33ff485738d818e562\"\n}",
+    "latency_ms": 6,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"b26f9c47d520041f4547424f59d2b83e\"\n}",
     "anomaly": false,
     "payload": "",
     "mutations": []
@@ -12,34 +12,65 @@
     "url": "http://localhost:8000/ftp/?q=",
     "status": 404,
     "latency_ms": 4,
-    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"2af7231482cf8d5e97b466624dd2eb68\"\n}",
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"810326232a88c55a25aa296451b3b24d\"\n}",
     "anomaly": false,
     "payload": "",
     "mutations": []
   },
   {
     "url": "http://localhost:8000/rest/products/search?q=%27",
-    "status": 429,
-    "latency_ms": 6,
-    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"c9f20801948332779ca6045514082a0c\"\n}",
+    "status": 200,
+    "latency_ms": 47,
+    "body_preview": "{\"status\":\"success\",\"data\":[]}",
     "anomaly": false,
     "payload": "'",
     "mutations": []
   },
   {
     "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1--",
-    "status": 429,
-    "latency_ms": 6,
-    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"5823ad47862cfa6724d1f6177e3cb851\"\n}",
-    "anomaly": false,
+    "status": 500,
+    "latency_ms": 45,
+    "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
+    "anomaly": true,
     "payload": "' OR 1=1--",
-    "mutations": []
+    "mutations": [
+      {
+        "payload": "' OR 1=1--'",
+        "status": 500,
+        "anomaly": true
+      },
+      {
+        "payload": "' OR 1=1/*'",
+        "status": 500,
+        "anomaly": true
+      }
+    ]
+  },
+  {
+    "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1--%27",
+    "status": 500,
+    "latency_ms": 38,
+    "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
+    "anomaly": true,
+    "payload": "' OR 1=1--'",
+    "mutated_from": "' OR 1=1--",
+    "mutation_round": 1
+  },
+  {
+    "url": "http://localhost:8000/rest/products/search?q=%27+OR+1%3D1%2F%2A%27",
+    "status": 500,
+    "latency_ms": 37,
+    "body_preview": "<html>\n  <head>\n    <meta charset='utf-8'> \n    <title>Error: SQLITE_ERROR: incomplete input</title>\n    <style>* {\n  margin: 0;\n  padding: 0;\n  outline: 0;\n}\n\nbody {\n  padding: 80px 100px;\n  font: 13px \"Helvetica Neue\", \"Lucida Grande\", \"Arial\";\n  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));\n  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);\n  background-repeat: no-repeat;\n  color: #555;\n  -webkit-font-smoothing: antialiased;\n}\nh1, h2 {\n  f",
+    "anomaly": true,
+    "payload": "' OR 1=1/*'",
+    "mutated_from": "' OR 1=1--",
+    "mutation_round": 2
   },
   {
     "url": "http://localhost:8000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E",
-    "status": 429,
-    "latency_ms": 5,
-    "body_preview": "{\n  \"message\":\"API rate limit exceeded\",\n  \"request_id\":\"4764c565f2037471d282d35ff28d133c\"\n}",
+    "status": 200,
+    "latency_ms": 46,
+    "body_preview": "{\"status\":\"success\",\"data\":[]}",
     "anomaly": false,
     "payload": "<script>alert(1)</script>",
     "mutations": []
@@ -47,8 +78,8 @@
   {
     "url": "http://localhost:8000/ftp/?q=",
     "status": 404,
-    "latency_ms": 5,
-    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"1b74ac535301a2127512d55cfb536511\"\n}",
+    "latency_ms": 4,
+    "body_preview": "{\n  \"message\":\"no Route matched with those values\",\n  \"request_id\":\"ff3c7a424b5f416de484b865b2ac160a\"\n}",
     "anomaly": false,
     "payload": "",
     "mutations": []
