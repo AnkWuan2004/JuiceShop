@@ -5,41 +5,40 @@
 <div class="page-head">
   <div class="page-kicker">{{ icons.dot("var(--sn-accent)") }}SAST · DAST · CI</div>
   <h2>Quét bảo mật &amp; CI</h2>
-  <p class="page-lead">Theo dõi kết quả Semgrep và OWASP ZAP, dữ liệu đã nạp vào <code>vuln_data.db</code>, và bản đồ bề mặt tấn công.</p>
+  <p class="page-lead">Toàn bộ lỗ hổng phát hiện được qua quét mã nguồn và quét ứng dụng đang chạy, cùng bản đồ bề mặt tấn công.</p>
 </div>
 
 <div class="row">
   <div class="card">
     <strong class="card-title">Semgrep (SAST)</strong>
     {% if semgrep_exists %}
-      <p>{{ icons.check() }}Có kết quả Semgrep thật: <code>{{ semgrep_path }}</code></p>
+      <p>{{ icons.check() }}Đã quét mã nguồn thật, chạy tự động mỗi lần cập nhật hệ thống.</p>
     {% else %}
       <p>{{ icons.warn() }}Chưa có kết quả Semgrep chạy thật cục bộ — CI GitHub Actions có chạy Semgrep thật mỗi push/PR.</p>
     {% endif %}
-    <pre>semgrep scan --config=p/default --json -o data-lake/reports/semgrep-report.json juice-shop</pre>
   </div>
   <div class="card">
     <strong class="card-title">OWASP ZAP (DAST)</strong>
     {% if zap_exists %}
-      <p>{{ icons.check() }}Có báo cáo ZAP thật từ CI: <code>{{ zap_path }}</code></p>
-      {% if zap_alerts is not none %}<p>{{ zap_alerts }} alert groups từ lần chạy CI thật (zaproxy/action-baseline).</p>{% endif %}
+      <p>{{ icons.check() }}Đã quét ứng dụng đang chạy thật, phát hiện lỗ hổng ở tầng request/response.</p>
+      {% if zap_alerts is not none %}<p>{{ zap_alerts }} nhóm cảnh báo từ lần quét thật gần nhất.</p>{% endif %}
     {% else %}
       <p>{{ icons.warn() }}Chưa có báo cáo ZAP thật.</p>
     {% endif %}
   </div>
 </div>
 
-<h3>Dữ liệu đã nạp vào <code>vuln_data.db</code></h3>
+<h3>Danh sách lỗ hổng đã phát hiện</h3>
 {% if rows %}
 <div class="table-wrap" role="region" aria-label="Bảng lỗ hổng" tabindex="0">
 <table>
   <thead>
-    <tr><th>id</th><th>tool</th><th>severity</th><th>name</th><th>path_or_url</th></tr>
+    <tr><th>#</th><th>Công cụ</th><th>Mức độ</th><th>Tên lỗ hổng</th><th>Vị trí</th></tr>
   </thead>
   <tbody>
   {% for r in rows %}
   <tr>
-    <td><code>{{ r.id }}</code></td>
+    <td>{{ r.id }}</td>
     <td>{{ r.tool }}</td>
     <td><span class="badge badge-{{ r.sev_norm }}">{{ r.severity }}</span></td>
     <td>{{ r.name }}</td>
@@ -50,7 +49,7 @@
 </table>
 </div>
 {% else %}
-<p class="alert">DB rỗng — chạy <code>python scripts/seed_sample_reports.py</code> hoặc nạp scan thật bằng <code>parse_results.py</code>.</p>
+<p class="alert">Chưa có dữ liệu quét — hệ thống sẽ tự nạp kết quả khi có lần quét mới.</p>
 {% endif %}
 
 <div class="card">

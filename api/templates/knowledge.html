@@ -54,8 +54,8 @@
 {% elif hits %}
   {% for h in hits %}
   <article class="card" style="animation:rise .4s ease both; animation-delay:{{ loop.index0 * 0.04 }}s;">
-    <strong class="card-title">{{ loop.index }}. <code>{{ h.id }}</code> <span class="hint">· score {{ "%.3f"|format(h.score) }}</span></strong>
-    <pre>{{ h.text[:400] }}</pre>
+    <strong class="card-title">{{ loop.index }}. {{ h.id }} <span class="hint">· độ khớp {{ "%.0f"|format(h.score * 100) }}%</span></strong>
+    <p style="margin:0;">{{ h.text[:400] }}</p>
   </article>
   {% endfor %}
 {% elif q %}

@@ -21,6 +21,13 @@
 > (navy + cyan + amber status) — khớp anti-pattern “Avoid light mode / poor data viz”
 > và tránh bias purple-on-white.
 
+> **Override (2026-08-22):** Chuyển sang **light mode** cho live demo trước mentor — dark ops
+> console tạo cảm giác "công cụ dev/hacker", không hợp bối cảnh trình diễn sản phẩm hoàn chỉnh.
+> Dùng palette slate/blue (nền `#F8FAFC`, chữ `#0F172A`/`#334155`, primary `#2563EB`, CTA amber-700
+> `#B45309` đủ tương phản) — xem bảng token đầy đủ trong `api/templates/base.html`. Cỡ chữ base
+> tăng 16px → 17px, heading chuyển từ JetBrains Mono sang IBM Plex Sans (mono chỉ còn dùng cho số
+> liệu/code). Override 2026-08-07 giữ lại làm lịch sử quyết định, không còn áp dụng cho live demo.
+
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
 | Primary | `#38BDF8` | `--sn-primary` |

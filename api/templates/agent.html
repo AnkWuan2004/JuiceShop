@@ -3,9 +3,9 @@
 {% block title %}Phân tích AI — Project Sentinel{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div class="page-kicker">{{ icons.dot("var(--sn-series-4)") }}Evidence-grounded agent</div>
+  <div class="page-kicker">{{ icons.dot("var(--sn-series-4)") }}AI có bằng chứng, không bịa đặt</div>
   <h2>Phân tích bảo mật bằng AI</h2>
-  <p class="page-lead">Đọc dữ liệu quét → gộp trùng → phân loại mức độ → giải thích + đề xuất khắc phục (có tham chiếu kho tri thức). Mỗi phát hiện trỏ <code>source_ids</code> về dữ liệu gốc.</p>
+  <p class="page-lead">AI đọc kết quả quét, gộp các phát hiện trùng lặp, phân loại mức độ rủi ro, và đề xuất cách khắc phục — mỗi kết luận đều trỏ về đúng dữ liệu quét gốc.</p>
 </div>
 
 <div class="tile-row">
@@ -46,7 +46,7 @@
         <span class="sev-{{ f.severity }}"><strong>[{{ f.id }}] {{ f.name }}</strong></span>
         <span class="hint">— {{ f.location }}</span>
         <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
-        <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+        <p><strong>Nguồn dữ liệu:</strong> {{ f.evidence.tools|join(", ") }} · {{ f.evidence.source_ids|length }} dòng dữ liệu gốc</p>
         <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
         <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
       </div>
@@ -114,7 +114,7 @@
         <details>
           <summary><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span> <span class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }}</span> <span class="hint">— {{ f.location }}</span></summary>
           <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
-          <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+          <p><strong>Nguồn dữ liệu:</strong> {{ f.evidence.tools|join(", ") }} · {{ f.evidence.source_ids|length }} dòng dữ liệu gốc</p>
           <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
           <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
         </details>
@@ -136,7 +136,7 @@
     <details>
       <summary><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span> <span class="sev-{{ f.severity }}">[{{ f.id }}] {{ f.name }}</span> <span class="hint">— {{ f.location }}</span></summary>
       <p><strong>Tin cậy:</strong> {{ f.confidence }}</p>
-      <p><strong>Bằng chứng:</strong> tools={{ f.evidence.tools }}, source_ids={{ f.evidence.source_ids }}</p>
+      <p><strong>Nguồn dữ liệu:</strong> {{ f.evidence.tools|join(", ") }} · {{ f.evidence.source_ids|length }} dòng dữ liệu gốc</p>
       <p><strong>Giải thích:</strong> {{ f.explanation }}</p>
       <p><strong>Đề xuất khắc phục:</strong> {{ f.remediation }}</p>
     </details>
@@ -154,12 +154,12 @@
     <button type="submit">Chạy bộ kiểm thử</button>
   </form>
   {% if test_output %}
-  <pre>{{ test_output.output }}</pre>
   {% if test_output.ok %}
-  <p class="alert alert-ok" role="status">Tất cả kiểm thử PASS.</p>
+  <p class="alert alert-ok" role="status">{{ icons.check() }}Tất cả kiểm thử PASS — {{ test_output.output.strip().splitlines()[-1] if test_output.output.strip() else "" }}</p>
   {% else %}
-  <p class="alert alert-error" role="alert">Có kiểm thử FAIL — xem log trên.</p>
+  <p class="alert alert-error" role="alert">{{ icons.warn() }}Có kiểm thử FAIL — xem chi tiết bên dưới.</p>
   {% endif %}
+  <details><summary>Xem chi tiết kỹ thuật</summary><pre>{{ test_output.output }}</pre></details>
   {% endif %}
 </section>
 {% endblock %}
